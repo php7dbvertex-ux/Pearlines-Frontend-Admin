@@ -50,7 +50,7 @@ import AddDoctorSchedulePage from "../pages/Doctors/AddDoctorSchedulePage";
 import FAQListPage from "../pages/Faq/FAQListPage";
 
 import AddTipPage from "../pages/Tips/AddTipPage";
-import EditTipPage from "../pages/Tips/EditTipPage";
+import Edittippage from "../pages/Tips/Edittippage";
 
 import AddFAQPage from "../pages/Faq/AddFAQPage";
 import EditFAQPage from "../pages/Faq/EditFAQPage";
@@ -110,7 +110,7 @@ const AppRoutes = () => {
         <Route path="doctor/add" element={<AddDoctorPage />} />
 
         <Route path="tip/add" element={<AddTipPage />} />
-        <Route path="tip/edit/:id" element={<EditTipPage />} />
+        <Route path="tip/edit/:id" element={<Edittippage.jsx />} />
 
         <Route path="gallery-image/add" element={<AddGalleryPage />} />
 
