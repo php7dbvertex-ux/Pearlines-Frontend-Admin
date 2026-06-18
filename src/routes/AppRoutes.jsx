@@ -17,10 +17,11 @@ import DoctorSchedulePage from "../pages/Doctors/DoctorSchedulePage";
 import DoctorListPage from "../pages/Doctors/DoctorListPage";
 
 import ChatPage from "../pages/Chat/ChatPage";
+import AddBannerPage from "../pages/Banner/AddBannerPage";
+import EditBannerPage from "../pages/Banner/EditBannerPage";
 
 import BannerListPage from "../pages/Banner/BannerListPage";
-import AddBannerPage from "../pages/banner/AddBannerPage";
-import EditBannerPage from "../pages/banner/EditBannerPage";
+
 import TipsListPage from "../pages/Tips/TipListPage";
 import VideoListPage from "../pages/Video/VideoListPage";
 import ServiceListPage from "../pages/Service/ServiceListPage";
