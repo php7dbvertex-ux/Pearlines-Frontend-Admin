@@ -1,0 +1,199 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { getAllDoctors } from "../../services/doctorService";
+import { getScheduleById, updateSchedule } from "../../services/doctorScheduleService";
+
+const EditDoctorSchedulePage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [formData, setFormData] = useState({
+    doctorId: "",
+    date: "",
+    time: "",
+    status: "Available",
+  });
+
+  // =========================
+  // Load Data
+  // =========================
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [doctorsResponse, scheduleResponse] = await Promise.all([
+          getAllDoctors(),
+          getScheduleById(id),
+        ]);
+
+        setDoctors(doctorsResponse.data || []);
+
+        const schedule = scheduleResponse.data;
+
+        setFormData({
+          doctorId: schedule.doctorId?._id  || "",
+          date:     schedule.date?.split("T")[0] || "",
+          time:     schedule.time   || "",
+          status:   schedule.status || "Available",
+        });
+      } catch (error) {
+        console.error(error);
+        alert("Failed to load schedule");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [id]);
+
+  // =========================
+  // Handle Change
+  // =========================
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // =========================
+  // Submit
+  // =========================
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      await updateSchedule(id, formData);
+      alert("Schedule Updated Successfully");
+      navigate("/admin/doctor-schedule");
+    } catch (error) {
+      console.error(error);
+      alert(error?.response?.data?.message || "Failed to update schedule");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // =========================
+  // Loading
+  // =========================
+
+  if (loading) {
+    return (
+      <div className="text-center py-10 text-lg">
+        Loading Schedule...
+      </div>
+    );
+  }
+
+  // Shared input/select class
+  const inputClass = `
+    w-full h-[42px] border border-gray-300
+    rounded px-3 text-sm outline-none
+    focus:border-[#3c8dbc]
+  `;
+
+  return (
+    <div>
+      {/* Heading */}
+      <h1 className="text-[24px] sm:text-[28px] font-light text-[#444] mb-4 text-center sm:text-left">
+        Edit Doctor Schedule
+      </h1>
+
+      {/* Card */}
+      <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+
+          {/* 2-column grid on desktop, 1-column on mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+
+            {/* Doctor */}
+            <div>
+              <label className="block font-semibold mb-2 text-sm">
+                Doctor
+              </label>
+              <select
+                name="doctorId"
+                value={formData.doctorId}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                {doctors.map((doctor) => (
+                  <option key={doctor._id} value={doctor._id}>
+                    {doctor.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block font-semibold mb-2 text-sm">
+                Date
+              </label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Time */}
+            <div>
+              <label className="block font-semibold mb-2 text-sm">
+                Time
+              </label>
+              <input
+                type="text"
+                name="time"
+                value={formData.time}
+                onChange={handleChange}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block font-semibold mb-2 text-sm">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className={inputClass}
+              >
+                <option value="Available">Available</option>
+                <option value="Not Available">Not Available</option>
+                <option value="Leave">Leave</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={saving}
+            className="
+              w-full sm:w-auto
+              bg-[#3c8dbc] hover:bg-[#367fa9]
+              text-white px-6 py-2 rounded
+              disabled:opacity-50 transition
+            "
+          >
+            {saving ? "Updating..." : "Update Schedule"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default EditDoctorSchedulePage;
