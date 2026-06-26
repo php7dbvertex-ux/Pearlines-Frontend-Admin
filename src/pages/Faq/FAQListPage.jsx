@@ -8,6 +8,9 @@ import {
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
+
 import {
   getAllFAQs,
   deleteFAQ,
@@ -28,10 +31,14 @@ const FAQListPage = () => {
   const loadFAQs = useCallback(async () => {
     try {
       setLoading(true);
+
       const response = await getAllFAQs();
+
       setFaqs(response?.data || []);
     } catch (error) {
       console.error("FAQ Fetch Error:", error);
+
+      toast.error("Failed to load FAQs");
     } finally {
       setLoading(false);
     }
@@ -41,6 +48,7 @@ const FAQListPage = () => {
     const fetchFAQs = async () => {
       await loadFAQs();
     };
+
     fetchFAQs();
   }, [loadFAQs]);
 
@@ -49,16 +57,27 @@ const FAQListPage = () => {
   // =========================
 
   const handleDelete = async (faqId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this FAQ?"
-    );
-    if (!confirmDelete) return;
+    const result = await Swal.fire({
+      title: "Delete FAQ?",
+      text: "Are you sure you want to delete this FAQ?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteFAQ(faqId);
+
+      toast.success("FAQ deleted successfully");
+
       await loadFAQs();
     } catch (error) {
       console.error("Delete Error:", error);
+
+      toast.error("Failed to delete FAQ");
     }
   };
 
@@ -74,7 +93,9 @@ const FAQListPage = () => {
     );
   }, [faqs, search]);
 
-  const totalPages = Math.ceil(filteredFAQs.length / recordsPerPage);
+  const totalPages = Math.ceil(
+    filteredFAQs.length / recordsPerPage
+  );
 
   const paginatedFAQs = filteredFAQs.slice(
     (currentPage - 1) * recordsPerPage,
@@ -83,10 +104,11 @@ const FAQListPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading FAQs...</div>
+      <div className="text-center py-10 text-lg">
+        Loading FAQs...
+      </div>
     );
   }
-
   return (
     <div>
       {/* Heading */}

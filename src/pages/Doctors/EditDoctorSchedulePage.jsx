@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAllDoctors } from "../../services/doctorService";
-import { getScheduleById, updateSchedule } from "../../services/doctorScheduleService";
+import {
+  getScheduleById,
+  updateSchedule,
+} from "../../services/doctorScheduleService";
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 const EditDoctorSchedulePage = () => {
   const { id } = useParams();
@@ -10,12 +15,17 @@ const EditDoctorSchedulePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [doctors, setDoctors] = useState([]);
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] = useState({
     doctorId: "",
     date: "",
     time: "",
     status: "Available",
   });
+
+  // Prevent past dates
+  const today = new Date().toISOString().split("T")[0];
 
   // =========================
   // Load Data
@@ -34,14 +44,14 @@ const EditDoctorSchedulePage = () => {
         const schedule = scheduleResponse.data;
 
         setFormData({
-          doctorId: schedule.doctorId?._id  || "",
-          date:     schedule.date?.split("T")[0] || "",
-          time:     schedule.time   || "",
-          status:   schedule.status || "Available",
+          doctorId: schedule.doctorId?._id || "",
+          date: schedule.date?.split("T")[0] || "",
+          time: schedule.time || "",
+          status: schedule.status || "Available",
         });
       } catch (error) {
         console.error(error);
-        alert("Failed to load schedule");
+        Swal.fire("Error", "Failed to load schedule", "error");
       } finally {
         setLoading(false);
       }
@@ -58,6 +68,31 @@ const EditDoctorSchedulePage = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [e.target.name]: "",
+    }));
+  };
+
+  // =========================
+  // Field Validation On Blur
+  // =========================
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+
+    if (!value || !value.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "This field is required",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   // =========================
@@ -66,14 +101,30 @@ const EditDoctorSchedulePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const newErrors = {};
+
+    if (!formData.doctorId)
+      newErrors.doctorId = "This field is required";
+
+    if (!formData.date)
+      newErrors.date = "This field is required";
+
+    if (!formData.time.trim())
+      newErrors.time = "This field is required";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
     try {
       setSaving(true);
       await updateSchedule(id, formData);
-      alert("Schedule Updated Successfully");
+      Swal.fire("Success", "Schedule Updated Successfully", "success");
       navigate("/admin/doctor-schedule");
     } catch (error) {
       console.error(error);
-      alert(error?.response?.data?.message || "Failed to update schedule");
+      Swal.fire("Error", error?.response?.data?.message || "Failed to update schedule", "error");
     } finally {
       setSaving(false);
     }
@@ -108,10 +159,8 @@ const EditDoctorSchedulePage = () => {
       {/* Card */}
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-
           {/* 2-column grid on desktop, 1-column on mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-
             {/* Doctor */}
             <div>
               <label className="block font-semibold mb-2 text-sm">
@@ -121,6 +170,7 @@ const EditDoctorSchedulePage = () => {
                 name="doctorId"
                 value={formData.doctorId}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 className={inputClass}
               >
                 {doctors.map((doctor) => (
@@ -129,6 +179,12 @@ const EditDoctorSchedulePage = () => {
                   </option>
                 ))}
               </select>
+
+              {errors.doctorId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.doctorId}
+                </p>
+              )}
             </div>
 
             {/* Date */}
@@ -141,8 +197,16 @@ const EditDoctorSchedulePage = () => {
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                min={today}
                 className={inputClass}
               />
+
+              {errors.date && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.date}
+                </p>
+              )}
             </div>
 
             {/* Time */}
@@ -155,8 +219,15 @@ const EditDoctorSchedulePage = () => {
                 name="time"
                 value={formData.time}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 className={inputClass}
               />
+
+              {errors.time && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.time}
+                </p>
+              )}
             </div>
 
             {/* Status */}

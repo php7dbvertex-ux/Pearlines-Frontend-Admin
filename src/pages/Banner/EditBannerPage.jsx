@@ -16,6 +16,7 @@ import {
 import {
   uploadImage,
 } from "../../services/uploadService";
+import { toast } from "react-toastify";
 
 const EditBannerPage = () => {
   const { id } = useParams();
@@ -34,26 +35,28 @@ const EditBannerPage = () => {
   // Load Banner
   // =========================
 
-  useEffect(() => {
-    const loadBanner = async () => {
-      try {
-        const response = await getBannerById(id);
-        const banner = response.data;
-        setFormData({
-          title: banner.title || "",
-          imageUrl: banner.imageUrl || "",
-          publicId: banner.publicId || "",
-        });
-      } catch (error) {
-        console.error(error);
-        alert("Failed to load banner");
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const loadBanner = async () => {
+    try {
+      const response = await getBannerById(id);
+      const banner = response.data;
 
-    loadBanner();
-  }, [id]);
+      setFormData({
+        title: banner.title || "",
+        imageUrl: banner.imageUrl || "",
+        publicId: banner.publicId || "",
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load banner");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadBanner();
+}, [id]);
+ 
 
   // =========================
   // Input Change
@@ -70,52 +73,59 @@ const EditBannerPage = () => {
   // Upload New Image
   // =========================
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+ const handleImageUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    try {
-      setUploading(true);
-      const response = await uploadImage(file);
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: response.data.imageUrl,
-        publicId: response.data.publicId,
-      }));
-    } catch (error) {
-      console.error(error);
-      alert("Image upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
+  try {
+    setUploading(true);
 
+    const response = await uploadImage(file);
+
+    setFormData((prev) => ({
+      ...prev,
+      imageUrl: response.data.imageUrl,
+      publicId: response.data.publicId,
+    }));
+
+    toast.success("Image uploaded successfully");
+  } catch (error) {
+    console.error(error);
+    toast.error("Image upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
   // =========================
   // Submit
   // =========================
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  if (!formData.title.trim()) {
+    toast.error("Banner title is required");
+    return;
+  }
 
-    if (!formData.title.trim()) {
-      return alert("Banner title is required");
-    }
+  try {
+    setSaving(true);
 
-    try {
-      setSaving(true);
-      await updateBanner(id, formData);
-      alert("Banner Updated Successfully");
-      navigate("/admin/banner");
-    } catch (error) {
-      console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to update banner"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+    await updateBanner(id, formData);
 
+    toast.success("Banner Updated Successfully");
+
+    navigate("/admin/banner");
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error?.response?.data?.message ||
+        "Failed to update banner"
+    );
+  } finally {
+    setSaving(false);
+  }
+}
   if (loading) {
     return (
       <div className="text-center py-10 text-lg">Loading Banner...</div>

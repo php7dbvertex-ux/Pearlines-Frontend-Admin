@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import {
   createService,
 } from "../../services/serviceService";
@@ -63,10 +65,14 @@ const AddServicePage = () => {
           publicId:
             response.data.publicId,
         }));
+
+        toast.success(
+          "Image uploaded successfully"
+        );
       } catch (error) {
         console.error(error);
 
-        alert(
+        toast.error(
           "Image upload failed"
         );
       } finally {
@@ -86,25 +92,28 @@ const AddServicePage = () => {
     if (
       !formData.title.trim()
     ) {
-      return alert(
+      toast.error(
         "Service title is required"
       );
+      return;
     }
 
     if (
       !formData.description.trim()
     ) {
-      return alert(
+      toast.error(
         "Description is required"
       );
+      return;
     }
 
     if (
       !formData.imageUrl
     ) {
-      return alert(
+      toast.error(
         "Please upload image"
       );
+      return;
     }
 
     try {
@@ -114,17 +123,19 @@ const AddServicePage = () => {
         formData
       );
 
-      alert(
+      toast.success(
         "Service Added Successfully"
       );
 
-      navigate(
-        "/admin/service"
-      );
+      setTimeout(() => {
+        navigate(
+          "/admin/service"
+        );
+      }, 1500);
     } catch (error) {
       console.error(error);
 
-      alert(
+      toast.error(
         error?.response?.data
           ?.message ||
           "Failed to add service"

@@ -1,17 +1,20 @@
 import { Navigate } from "react-router-dom";
 
-const ProtectedRoute = ({ children }) => {
-  const isLoggedIn =
-    localStorage.getItem("isLoggedIn") === "true";
+const ProtectedRoute = ({
+  children,
+}) => {
+  const token =
+    localStorage.getItem(
+      "adminToken"
+    );
 
-  const adminEmail =
-    localStorage.getItem("adminEmail");
-
-  if (
-    !isLoggedIn ||
-    adminEmail !== "admin@gmail.com"
-  ) {
-    return <Navigate to="/" replace />;
+  if (!token) {
+    return (
+      <Navigate
+        to="/"
+        replace
+      />
+    );
   }
 
   return children;

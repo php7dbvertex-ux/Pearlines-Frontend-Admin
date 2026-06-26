@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { createBanner } from "../../services/bannerService";
 import { uploadImage } from "../../services/uploadService";
 
+import { toast } from "react-toastify";
+
 const AddBannerPage = () => {
   const navigate = useNavigate();
 
@@ -28,46 +30,68 @@ const AddBannerPage = () => {
   // =========================
   // Upload Image
   // =========================
+const handleImageUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      setUploading(true);
-      const response = await uploadImage(file);
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: response.data.imageUrl,
-        publicId: response.data.publicId,
-      }));
-    } catch (error) {
-      console.error(error);
-      alert("Image upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
+  try {
+    setUploading(true);
 
+    const response = await uploadImage(file);
+
+    setFormData((prev) => ({
+      ...prev,
+      imageUrl: response.data.imageUrl,
+      publicId: response.data.publicId,
+    }));
+
+    toast.success("Image uploaded successfully");
+  } catch (error) {
+    console.error(error);
+
+    toast.error("Image upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
   // =========================
   // Submit
   // =========================
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.title.trim()) return alert("Banner title is required");
-    if (!formData.imageUrl)     return alert("Please upload image");
-    try {
-      setSaving(true);
-      await createBanner(formData);
-      alert("Banner Added Successfully");
+  if (!formData.title.trim()) {
+    toast.error("Banner title is required");
+    return;
+  }
+
+  if (!formData.imageUrl) {
+    toast.error("Please upload image");
+    return;
+  }
+
+  try {
+    setSaving(true);
+
+    await createBanner(formData);
+
+    toast.success("Banner Added Successfully");
+
+    setTimeout(() => {
       navigate("/admin/banner");
-    } catch (error) {
-      console.error(error);
-      alert(error?.response?.data?.message || "Failed to add banner");
-    } finally {
-      setSaving(false);
-    }
-  };
+    }, 1500);
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error?.response?.data?.message ||
+      "Failed to add banner"
+    );
+  } finally {
+    setSaving(false);
+  }
+};
+
 
   // Shared input class
   const inputClass = `

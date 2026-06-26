@@ -1,9 +1,24 @@
 import { useEffect, useState } from "react";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import { toast } from "react-toastify";
 
 import {
   getTermsCondition,
   updateTermsCondition,
 } from "../../services/termsConditionService";
+
+// Toolbar options for the editor
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 const TermsConditionPage = () => {
   const [loading, setLoading] = useState(true);
@@ -21,6 +36,9 @@ const TermsConditionPage = () => {
         setContent(response?.data?.content || "");
       } catch (error) {
         console.error(error);
+        toast.error(
+          "Failed to load Terms & Conditions"
+        );
       } finally {
         setLoading(false);
       }
@@ -38,11 +56,20 @@ const TermsConditionPage = () => {
 
     try {
       setSaving(true);
-      await updateTermsCondition({ content });
-      alert("Terms & Conditions Updated Successfully");
+
+      await updateTermsCondition({
+        content,
+      });
+
+      toast.success(
+        "Terms & Conditions Updated Successfully"
+      );
     } catch (error) {
       console.error(error);
-      alert("Failed To Update Terms & Conditions");
+
+      toast.error(
+        "Failed To Update Terms & Conditions"
+      );
     } finally {
       setSaving(false);
     }
@@ -55,6 +82,7 @@ const TermsConditionPage = () => {
       </div>
     );
   }
+
 
   return (
     <div>
@@ -69,17 +97,13 @@ const TermsConditionPage = () => {
             <label className="block font-semibold mb-2">
               Terms & Conditions Content
             </label>
-            <textarea
-              rows="20"
+            <ReactQuill
+              theme="snow"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="
-                w-full
-                border border-gray-300
-                rounded px-3 py-3
-                resize-none outline-none
-                focus:border-[#3c8dbc]
-              "
+              onChange={setContent}
+              modules={quillModules}
+              className="bg-white"
+              style={{ height: "400px", marginBottom: "42px" }}
             />
           </div>
 

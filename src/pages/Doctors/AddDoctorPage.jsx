@@ -6,6 +6,8 @@ const AddDoctorPage = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] = useState({
     name: "",
     mobileNo: "",
@@ -22,6 +24,31 @@ const AddDoctorPage = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [e.target.name]: "",
+    }));
+  };
+
+  // =========================
+  // Handle Blur
+  // =========================
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+
+    if (!value.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "This field is required",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   // =========================
@@ -31,10 +58,29 @@ const AddDoctorPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name.trim())     return alert("Doctor name is required");
-    if (!formData.mobileNo.trim()) return alert("Mobile number is required");
-    if (!formData.email.trim())    return alert("Email is required");
-    if (!/^\d{4}$/.test(formData.mpin)) return alert("MPIN must be exactly 4 digits");
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "This field is required";
+    }
+
+    if (!formData.mobileNo.trim()) {
+      newErrors.mobileNo = "This field is required";
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = "This field is required";
+    }
+
+    if (!formData.mpin.trim()) {
+      newErrors.mpin = "This field is required";
+    } else if (!/^\d{4}$/.test(formData.mpin)) {
+      newErrors.mpin = "MPIN must be exactly 4 digits";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
 
     try {
       setLoading(true);
@@ -66,10 +112,8 @@ const AddDoctorPage = () => {
       {/* Card */}
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-
           {/* 2-column grid on desktop, 1-column on mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-
             {/* Doctor Name */}
             <div>
               <label className="block font-semibold mb-2 text-sm">
@@ -80,9 +124,15 @@ const AddDoctorPage = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Enter Doctor Name"
                 className={inputClass}
               />
+              {errors.name && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.name}
+                </p>
+              )}
             </div>
 
             {/* Mobile Number */}
@@ -95,9 +145,15 @@ const AddDoctorPage = () => {
                 name="mobileNo"
                 value={formData.mobileNo}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Enter Mobile Number"
                 className={inputClass}
               />
+              {errors.mobileNo && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.mobileNo}
+                </p>
+              )}
             </div>
 
             {/* Email */}
@@ -110,9 +166,15 @@ const AddDoctorPage = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Enter Email"
                 className={inputClass}
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             {/* MPIN */}
@@ -125,10 +187,16 @@ const AddDoctorPage = () => {
                 name="mpin"
                 value={formData.mpin}
                 onChange={handleChange}
-                maxLength="4"
+                onBlur={handleBlur}
+                maxLength={4}
                 placeholder="Enter 4 Digit MPIN"
                 className={inputClass}
               />
+              {errors.mpin && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.mpin}
+                </p>
+              )}
             </div>
           </div>
 

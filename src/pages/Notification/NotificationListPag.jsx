@@ -1,6 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Trash2, Plus } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Trash2,
+  Plus,
+  X,
+} from "lucide-react";
+
 import { Link } from "react-router-dom";
+
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 import {
   getAllNotifications,
@@ -13,67 +27,144 @@ const NotificationListPage = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [previewImage, setPreviewImage] =
+    useState(null);
+
   const recordsPerPage = 10;
 
-  const loadNotifications = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await getAllNotifications();
-      setNotifications(response?.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // =========================
+  // Load Notifications
+  // =========================
+
+  const loadNotifications =
+    useCallback(async () => {
+      try {
+        setLoading(true);
+
+        const response =
+          await getAllNotifications();
+
+        setNotifications(
+          response?.data || []
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Failed to load notifications"
+        );
+      } finally {
+        setLoading(false);
+      }
+    }, []);
 
   useEffect(() => {
     let isMounted = true;
+
     const handle = setTimeout(() => {
-      if (isMounted) loadNotifications();
+      if (isMounted)
+        loadNotifications();
     }, 0);
+
     return () => {
       isMounted = false;
       clearTimeout(handle);
     };
   }, [loadNotifications]);
 
-  const handleDelete = async (notificationId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this notification?"
-    );
-    if (!confirmDelete) return;
+  // =========================
+  // Delete Notification
+  // =========================
+
+  const handleDelete = async (
+    notificationId
+  ) => {
+    const result =
+      await Swal.fire({
+        title:
+          "Delete Notification?",
+        text:
+          "Are you sure you want to delete this notification?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText:
+          "Yes, Delete",
+        cancelButtonText:
+          "Cancel",
+      });
+
+    if (!result.isConfirmed)
+      return;
+
     try {
-      await deleteNotification(notificationId);
+      await deleteNotification(
+        notificationId
+      );
+
+      toast.success(
+        "Notification deleted successfully"
+      );
+
       await loadNotifications();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete notification");
+
+      toast.error(
+        "Failed to delete notification"
+      );
     }
   };
 
-  const filteredNotifications = useMemo(() => {
-    return notifications.filter(
-      (item) =>
-        item.title?.toLowerCase().includes(search.toLowerCase()) ||
-        item.message?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [notifications, search]);
+  // =========================
+  // Search & Pagination
+  // =========================
 
-  const totalPages = Math.ceil(filteredNotifications.length / recordsPerPage);
-  const effectiveCurrentPage = Math.min(Math.max(currentPage, 1), totalPages || 1);
-  const paginatedNotifications = filteredNotifications.slice(
-    (effectiveCurrentPage - 1) * recordsPerPage,
-    effectiveCurrentPage * recordsPerPage
-  );
+  const filteredNotifications =
+    useMemo(() => {
+      return notifications.filter(
+        (item) =>
+          item.title
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            ) ||
+          item.message
+            ?.toLowerCase()
+            .includes(
+              search.toLowerCase()
+            )
+      );
+    }, [notifications, search]);
+
+  const totalPages =
+    Math.ceil(
+      filteredNotifications.length /
+        recordsPerPage
+    );
+
+  const effectiveCurrentPage =
+    Math.min(
+      Math.max(currentPage, 1),
+      totalPages || 1
+    );
+
+  const paginatedNotifications =
+    filteredNotifications.slice(
+      (effectiveCurrentPage - 1) *
+        recordsPerPage,
+      effectiveCurrentPage *
+        recordsPerPage
+    );
 
   if (loading) {
     return (
       <div className="text-center py-10 text-lg">
-        Loading Notifications...
+        Loading
+        Notifications...
       </div>
     );
   }
+
 
   return (
     <div>
@@ -146,7 +237,8 @@ const NotificationListPage = () => {
                     <img
                       src={item.imageUrl}
                       alt=""
-                      className="w-14 h-14 object-cover rounded border"
+                      onClick={() => setPreviewImage({ src: item.imageUrl, alt: item.title })}
+                      className="w-14 h-14 object-contain bg-gray-50 rounded border cursor-pointer"
                     />
                   ) : (
                     <span>-</span>
@@ -193,7 +285,8 @@ const NotificationListPage = () => {
                         <img
                           src={item.imageUrl}
                           alt=""
-                          className="w-14 h-14 object-cover rounded border"
+                          onClick={() => setPreviewImage({ src: item.imageUrl, alt: item.title })}
+                          className="w-14 h-14 object-contain bg-gray-50 rounded border cursor-pointer"
                         />
                       ) : (
                         "-"
@@ -249,6 +342,27 @@ const NotificationListPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Image Preview Modal ── */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded cursor-default"
+          />
+        </div>
+      )}
     </div>
   );
 };

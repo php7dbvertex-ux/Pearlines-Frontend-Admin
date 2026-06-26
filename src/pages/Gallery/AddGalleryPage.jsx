@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { createGallery } from "../../services/galleryService";
 import { uploadImage } from "../../services/uploadService";
 
@@ -36,15 +38,20 @@ const AddGalleryPage = () => {
 
     try {
       setUploading(true);
+
       const response = await uploadImage(file);
+
       setFormData((prev) => ({
         ...prev,
         imageUrl: response.data.imageUrl,
         publicId: response.data.publicId,
       }));
+
+      toast.success("Image uploaded successfully");
     } catch (error) {
       console.error(error);
-      alert("Image upload failed");
+
+      toast.error("Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -58,27 +65,39 @@ const AddGalleryPage = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      return alert("Title is required");
+      toast.error("Title is required");
+      return;
     }
 
     if (!formData.imageUrl) {
-      return alert("Please upload image");
+      toast.error("Please upload image");
+      return;
     }
 
     try {
       setSaving(true);
+
       await createGallery(formData);
-      alert("Gallery Image Added Successfully");
-      navigate("/admin/gallery-image");
+
+      toast.success(
+        "Gallery Image Added Successfully"
+      );
+
+      setTimeout(() => {
+        navigate("/admin/gallery-image");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to add image"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to add image"
       );
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <div>

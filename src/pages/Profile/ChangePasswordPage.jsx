@@ -1,65 +1,99 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { toast } from "react-toastify";
+import api from "../../config/api";
 
 const ChangePasswordPage = () => {
-  // Form State
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
-  // Show/Hide New Password
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
 
-  // Error Message
-  const [error, setError] = useState("");
+  const [loading, setLoading] =
+    useState(false);
 
-  // Handle Input Change
+  const [error, setError] =
+    useState("");
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } =
+      e.target;
 
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
 
-    // Remove error while typing
     setError("");
   };
 
-  // Handle Form Submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (
+    e
+  ) => {
     e.preventDefault();
 
-    // Check password match
-    if (formData.newPassword !== formData.confirmPassword) {
-      setError("New Password and Confirm Password must be same.");
+    if (
+      formData.newPassword !==
+      formData.confirmPassword
+    ) {
+      const message =
+        "New Password and Confirm Password must be same.";
+
+      setError(message);
+
+      toast.error(message);
+
       return;
     }
 
-    // API call will come here later
-    console.log("Password Changed Successfully");
-    console.log(formData);
+    try {
+      setLoading(true);
 
-    alert("Password Changed Successfully");
+      const response =
+        await api.put(
+          "/admin/change-password",
+          {
+            oldPassword:
+              formData.currentPassword,
+            newPassword:
+              formData.newPassword,
+          }
+        );
 
-    // Reset form
-    setFormData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+      toast.success(
+        response.data.message
+      );
+
+      setFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setError("");
+    } catch (error) {
+      const errorMessage =
+        error.response?.data
+          ?.message ||
+        "Failed to change password";
+
+      setError(errorMessage);
+
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
-
   return (
     <div>
-      {/* Page Heading */}
       <h1 className="text-[38px] font-light text-[#444] mb-6">
         Change Password
       </h1>
 
-      {/* Main Card */}
       <div
         className="
           bg-white
@@ -75,8 +109,6 @@ const ChangePasswordPage = () => {
           className="p-6"
         >
           <div className="space-y-5">
-
-            {/* Current Password */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
                 Current Password
@@ -86,8 +118,12 @@ const ChangePasswordPage = () => {
                 type="password"
                 name="currentPassword"
                 placeholder="Enter Current Password"
-                value={formData.currentPassword}
-                onChange={handleChange}
+                value={
+                  formData.currentPassword
+                }
+                onChange={
+                  handleChange
+                }
                 className="
                   w-full
                   h-[45px]
@@ -101,7 +137,6 @@ const ChangePasswordPage = () => {
               />
             </div>
 
-            {/* New Password */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
                 New Password
@@ -109,11 +144,19 @@ const ChangePasswordPage = () => {
 
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
                   name="newPassword"
                   placeholder="Enter New Password"
-                  value={formData.newPassword}
-                  onChange={handleChange}
+                  value={
+                    formData.newPassword
+                  }
+                  onChange={
+                    handleChange
+                  }
                   className="
                     w-full
                     h-[45px]
@@ -127,11 +170,12 @@ const ChangePasswordPage = () => {
                   "
                 />
 
-                {/* Eye Button */}
                 <button
                   type="button"
                   onClick={() =>
-                    setShowPassword(!showPassword)
+                    setShowPassword(
+                      !showPassword
+                    )
                   }
                   className="
                     absolute
@@ -142,15 +186,18 @@ const ChangePasswordPage = () => {
                   "
                 >
                   {showPassword ? (
-                    <EyeOff size={20} />
+                    <EyeOff
+                      size={20}
+                    />
                   ) : (
-                    <Eye size={20} />
+                    <Eye
+                      size={20}
+                    />
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
                 Confirm Password
@@ -160,8 +207,12 @@ const ChangePasswordPage = () => {
                 type="password"
                 name="confirmPassword"
                 placeholder="Confirm New Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
+                value={
+                  formData.confirmPassword
+                }
+                onChange={
+                  handleChange
+                }
                 className="
                   w-full
                   h-[45px]
@@ -175,16 +226,15 @@ const ChangePasswordPage = () => {
               />
             </div>
 
-            {/* Error Message */}
             {error && (
               <p className="text-red-500 text-sm font-medium">
                 {error}
               </p>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
+              disabled={loading}
               className="
                 bg-[#3c8dbc]
                 hover:bg-[#367fa9]
@@ -194,9 +244,12 @@ const ChangePasswordPage = () => {
                 rounded
                 transition
                 font-medium
+                disabled:opacity-50
               "
             >
-              Update Password
+              {loading
+                ? "Updating..."
+                : "Update Password"}
             </button>
           </div>
         </form>

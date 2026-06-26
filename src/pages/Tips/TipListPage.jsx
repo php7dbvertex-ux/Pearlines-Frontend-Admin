@@ -5,8 +5,11 @@ import {
   useState,
 } from "react";
 
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
+
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 import {
   getAllTips,
@@ -18,6 +21,7 @@ const TipListPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const recordsPerPage = 10;
 
@@ -37,6 +41,7 @@ const TipListPage = () => {
       setTips(tipsData);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to load tips");
     } finally {
       setLoading(false);
     }
@@ -49,16 +54,25 @@ const TipListPage = () => {
       try {
         setLoading(true);
         const tipsData = await fetchTipsData();
-        if (isMounted) setTips(tipsData);
+
+        if (isMounted) {
+          setTips(tipsData);
+        }
       } catch (error) {
         console.error(error);
+        toast.error("Failed to load tips");
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     initialize();
-    return () => { isMounted = false; };
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // =========================
@@ -66,17 +80,26 @@ const TipListPage = () => {
   // =========================
 
   const handleDelete = async (tipId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this tip?"
-    );
-    if (!confirmDelete) return;
+    const result = await Swal.fire({
+      title: "Delete Tip?",
+      text: "Are you sure you want to delete this tip?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteTip(tipId);
+
+      toast.success("Tip deleted successfully");
+
       await loadTips();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete tip");
+      toast.error("Failed to delete tip");
     }
   };
 
@@ -90,7 +113,9 @@ const TipListPage = () => {
     );
   }, [tips, search]);
 
-  const totalPages = Math.ceil(filteredTips.length / recordsPerPage);
+  const totalPages = Math.ceil(
+    filteredTips.length / recordsPerPage
+  );
 
   const paginatedTips = filteredTips.slice(
     (currentPage - 1) * recordsPerPage,
@@ -99,9 +124,12 @@ const TipListPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Tips...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Tips...
+      </div>
     );
   }
+
 
   return (
     <div>
@@ -179,7 +207,8 @@ const TipListPage = () => {
                   <img
                     src={tip.imageUrl}
                     alt={tip.title}
-                    className="w-16 h-16 object-cover rounded border flex-shrink-0"
+                    onClick={() => setPreviewImage({ src: tip.imageUrl, alt: tip.title })}
+                    className="w-16 h-16 object-contain bg-gray-50 rounded border flex-shrink-0 cursor-pointer"
                   />
                   <div className="grid grid-cols-[60px_1fr] gap-y-1.5 text-xs">
                     <span className="text-gray-400 font-medium">Title</span>
@@ -219,7 +248,8 @@ const TipListPage = () => {
                       <img
                         src={tip.imageUrl}
                         alt={tip.title}
-                        className="w-16 h-16 object-cover rounded border"
+                        onClick={() => setPreviewImage({ src: tip.imageUrl, alt: tip.title })}
+                        className="w-16 h-16 object-contain bg-gray-50 rounded border cursor-pointer"
                       />
                     </td>
                     <td className="px-3 py-3">{tip.title}</td>
@@ -279,6 +309,27 @@ const TipListPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Image Preview Modal ── */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded cursor-default"
+          />
+        </div>
+      )}
     </div>
   );
 };

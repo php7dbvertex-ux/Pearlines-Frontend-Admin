@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getTodayAppointments } from "../../services/appointmentService";
+import { getRevisitAppointments } from "../../services/appointmentService";
 
 const StatusBadge = ({ status }) => {
   const color =
@@ -18,6 +19,20 @@ const StatusBadge = ({ status }) => {
   );
 };
 
+// Returns true if the given date string falls on today's local date
+const isToday = (dateValue) => {
+  if (!dateValue) return false;
+  const d = new Date(dateValue);
+  if (isNaN(d.getTime())) return false;
+
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+};
+
 const TodayAppointmentPage = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,8 +46,34 @@ const TodayAppointmentPage = () => {
     const loadAppointments = async () => {
       try {
         setLoading(true);
-        const response = await getTodayAppointments();
-        if (isMounted) setAppointments(response?.data || []);
+
+        // Fetch both sources in parallel
+        const [todayRes, revisitRes] = await Promise.allSettled([
+          getTodayAppointments(),
+          getRevisitAppointments(),
+        ]);
+
+        const todayData =
+          todayRes.status === "fulfilled" ? todayRes.value?.data || [] : [];
+
+        const revisitData =
+          revisitRes.status === "fulfilled" ? revisitRes.value?.data || [] : [];
+
+        // Only keep revisit appointments that actually fall on today's date
+        const revisitToday = revisitData.filter((a) => isToday(a.appointmentDate));
+
+        // Merge, avoiding duplicate _id entries (in case an appointment appears in both)
+        const merged = [...todayData];
+        const existingIds = new Set(todayData.map((a) => a._id));
+
+        revisitToday.forEach((a) => {
+          if (!existingIds.has(a._id)) {
+            merged.push(a);
+            existingIds.add(a._id);
+          }
+        });
+
+        if (isMounted) setAppointments(merged);
       } catch (error) {
         console.error("Error Fetching Today's Appointments:", error);
       } finally {
@@ -43,13 +84,47 @@ const TodayAppointmentPage = () => {
     return () => { isMounted = false; };
   }, []);
 
+  // Helper: combine appointmentDate + appointmentTime into a single sortable timestamp
+  const getAppointmentDateTime = (a) => {
+    if (!a.appointmentDate) return 0;
+
+    const datePart = new Date(a.appointmentDate);
+    if (isNaN(datePart.getTime())) return 0;
+
+    if (a.appointmentTime) {
+      // appointmentTime expected like "14:30" or "2:30 PM"
+      const timeStr = a.appointmentTime.trim();
+      const ampmMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+
+      if (ampmMatch) {
+        let hours = parseInt(ampmMatch[1], 10);
+        const minutes = parseInt(ampmMatch[2], 10);
+        const meridiem = ampmMatch[3]?.toUpperCase();
+
+        if (meridiem === "PM" && hours < 12) hours += 12;
+        if (meridiem === "AM" && hours === 12) hours = 0;
+
+        datePart.setHours(hours, minutes, 0, 0);
+      }
+    }
+
+    return datePart.getTime();
+  };
+
+  // Sort by Appointment Date then Time (earliest first)
+  const sortedAppointments = useMemo(() => {
+    return [...appointments].sort(
+      (a, b) => getAppointmentDateTime(a) - getAppointmentDateTime(b)
+    );
+  }, [appointments]);
+
   const filteredAppointments = useMemo(() => {
-    return appointments.filter((a) =>
+    return sortedAppointments.filter((a) =>
       a.patientName?.toLowerCase().includes(search.toLowerCase()) ||
       a.problem?.toLowerCase().includes(search.toLowerCase()) ||
       a._id?.toLowerCase().includes(search.toLowerCase())
     );
-  }, [appointments, search]);
+  }, [sortedAppointments, search]);
 
   const totalPages = Math.ceil(filteredAppointments.length / recordsPerPage);
   const effectiveCurrentPage = Math.min(Math.max(currentPage, 1), totalPages || 1);

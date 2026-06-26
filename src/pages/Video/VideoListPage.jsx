@@ -8,6 +8,9 @@ import {
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
+
 import {
   getAllVideos,
   deleteVideo,
@@ -28,10 +31,14 @@ const VideoListPage = () => {
   const loadVideos = useCallback(async () => {
     try {
       setLoading(true);
+
       const response = await getAllVideos();
+
       setVideos(response?.data || []);
     } catch (error) {
       console.error(error);
+
+      toast.error("Failed to load videos");
     } finally {
       setLoading(false);
     }
@@ -48,17 +55,27 @@ const VideoListPage = () => {
   // =========================
 
   const handleDelete = async (videoId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this video?"
-    );
-    if (!confirmDelete) return;
+    const result = await Swal.fire({
+      title: "Delete Video?",
+      text: "Are you sure you want to delete this video?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteVideo(videoId);
+
+      toast.success("Video deleted successfully");
+
       await loadVideos();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete video");
+
+      toast.error("Failed to delete video");
     }
   };
 
@@ -69,12 +86,18 @@ const VideoListPage = () => {
   const filteredVideos = useMemo(() => {
     return videos.filter(
       (video) =>
-        video.title?.toLowerCase().includes(search.toLowerCase()) ||
-        video.videoUrl?.toLowerCase().includes(search.toLowerCase())
+        video.title
+          ?.toLowerCase()
+          .includes(search.toLowerCase()) ||
+        video.videoUrl
+          ?.toLowerCase()
+          .includes(search.toLowerCase())
     );
   }, [videos, search]);
 
-  const totalPages = Math.ceil(filteredVideos.length / recordsPerPage);
+  const totalPages = Math.ceil(
+    filteredVideos.length / recordsPerPage
+  );
 
   const paginatedVideos = filteredVideos.slice(
     (currentPage - 1) * recordsPerPage,
@@ -83,7 +106,9 @@ const VideoListPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Videos...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Videos...
+      </div>
     );
   }
 

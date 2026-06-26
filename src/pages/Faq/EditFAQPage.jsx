@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { getFAQById, updateFAQ } from "../../services/faqService";
 
 const EditFAQPage = () => {
@@ -9,6 +11,7 @@ const EditFAQPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     question: "",
     answer: "",
@@ -22,13 +25,15 @@ const EditFAQPage = () => {
     const loadFAQ = async () => {
       try {
         const response = await getFAQById(id);
+
         setFormData({
           question: response.data?.question || "",
           answer: response.data?.answer || "",
         });
       } catch (error) {
         console.error(error);
-        alert("Failed to load FAQ");
+
+        toast.error("Failed to load FAQ");
       } finally {
         setLoading(false);
       }
@@ -57,12 +62,18 @@ const EditFAQPage = () => {
 
     try {
       setSaving(true);
+
       await updateFAQ(id, formData);
-      alert("FAQ Updated Successfully");
-      navigate("/admin/faq");
+
+      toast.success("FAQ Updated Successfully");
+
+      setTimeout(() => {
+        navigate("/admin/faq");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert("Failed to update FAQ");
+
+      toast.error("Failed to update FAQ");
     } finally {
       setSaving(false);
     }
@@ -70,7 +81,9 @@ const EditFAQPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10">Loading FAQ...</div>
+      <div className="text-center py-10">
+        Loading FAQ...
+      </div>
     );
   }
 

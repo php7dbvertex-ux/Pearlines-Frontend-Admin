@@ -12,6 +12,23 @@ import {
   getRevisitAppointments,
 } from "../../services/appointmentService";
 
+// Helper: safely pull an array out of a response no matter how it's shaped
+// Handles: response.data, response.data.data, or response already being an array
+const extractArray = (response) => {
+  if (Array.isArray(response)) return response;
+
+  // New backend users response
+  if (Array.isArray(response?.users)) return response.users;
+
+  // Old API responses
+  if (Array.isArray(response?.data)) return response.data;
+
+  if (Array.isArray(response?.data?.data))
+    return response.data.data;
+
+  return [];
+};
+
 const DashboardPage = () => {
   const navigate = useNavigate();
 
@@ -26,23 +43,50 @@ const DashboardPage = () => {
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadDashboardData = async () => {
       try {
         const [usersRes, appointmentsRes, todayRes, revisitRes] =
-          await Promise.all([
+          await Promise.allSettled([
             getAllUsers(),
             getAllAppointments(),
             getTodayAppointments(),
             getRevisitAppointments(),
           ]);
 
-        const users = usersRes.data || [];
+        if (!isMounted) return;
 
-        const appointments = appointmentsRes.data || [];
+        // Log any individual failures instead of letting them silently
+        // wipe out the whole dashboard like Promise.all would
+        if (usersRes.status === "rejected") {
+          console.error("getAllUsers failed:", usersRes.reason);
+        }
+        if (appointmentsRes.status === "rejected") {
+          console.error("getAllAppointments failed:", appointmentsRes.reason);
+        }
+        if (todayRes.status === "rejected") {
+          console.error("getTodayAppointments failed:", todayRes.reason);
+        }
+        if (revisitRes.status === "rejected") {
+          console.error("getRevisitAppointments failed:", revisitRes.reason);
+        }
 
-        const todayAppointments = todayRes.data || [];
+        const users =
+          usersRes.status === "fulfilled" ? extractArray(usersRes.value) : [];
 
-        const revisitAppointments = revisitRes.data || [];
+        const appointments =
+          appointmentsRes.status === "fulfilled"
+            ? extractArray(appointmentsRes.value)
+            : [];
+
+        const todayAppointments =
+          todayRes.status === "fulfilled" ? extractArray(todayRes.value) : [];
+
+        const revisitAppointments =
+          revisitRes.status === "fulfilled"
+            ? extractArray(revisitRes.value)
+            : [];
 
         setUserCount(users.length);
 
@@ -61,6 +105,10 @@ const DashboardPage = () => {
     };
 
     loadDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const cards = [

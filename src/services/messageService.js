@@ -22,3 +22,13 @@ export const getMessagesByChatId =
 
     return response.data;
   };
+
+export const markMessagesAsRead =
+  async (chatId) => {
+    const response =
+      await api.patch(
+        `/messages/${chatId}/read`
+      );
+
+    return response.data;
+  };

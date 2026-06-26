@@ -8,12 +8,17 @@ const AddDoctorSchedulePage = () => {
 
   const [loading, setLoading] = useState(false);
   const [doctors, setDoctors] = useState([]);
+  const [errors, setErrors] = useState({});
+
   const [formData, setFormData] = useState({
     doctorId: "",
     date: "",
     time: "",
     status: "Available",
   });
+
+  // Prevent past dates
+  const today = new Date().toISOString().split("T")[0];
 
   // =========================
   // Load Doctors
@@ -40,6 +45,31 @@ const AddDoctorSchedulePage = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [e.target.name]: "",
+    }));
+  };
+
+  // =========================
+  // Field Validation On Blur
+  // =========================
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+
+    if (!value || !value.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "This field is required",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   // =========================
@@ -49,9 +79,20 @@ const AddDoctorSchedulePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.doctorId) return alert("Please select doctor");
-    if (!formData.date)     return alert("Please select date");
-    if (!formData.time.trim()) return alert("Please enter time");
+    const newErrors = {};
+
+    if (!formData.doctorId)
+      newErrors.doctorId = "This field is required";
+
+    if (!formData.date)
+      newErrors.date = "This field is required";
+
+    if (!formData.time.trim())
+      newErrors.time = "This field is required";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
 
     try {
       setLoading(true);
@@ -83,10 +124,8 @@ const AddDoctorSchedulePage = () => {
       {/* Card */}
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-
           {/* 2-column grid on desktop, 1-column on mobile */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-
             {/* Doctor */}
             <div>
               <label className="block font-semibold mb-2 text-sm">
@@ -96,6 +135,7 @@ const AddDoctorSchedulePage = () => {
                 name="doctorId"
                 value={formData.doctorId}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 className={inputClass}
               >
                 <option value="">Select Doctor</option>
@@ -105,6 +145,12 @@ const AddDoctorSchedulePage = () => {
                   </option>
                 ))}
               </select>
+
+              {errors.doctorId && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.doctorId}
+                </p>
+              )}
             </div>
 
             {/* Date */}
@@ -117,8 +163,16 @@ const AddDoctorSchedulePage = () => {
                 name="date"
                 value={formData.date}
                 onChange={handleChange}
+                onBlur={handleBlur}
+                min={today}
                 className={inputClass}
               />
+
+              {errors.date && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.date}
+                </p>
+              )}
             </div>
 
             {/* Time */}
@@ -131,9 +185,16 @@ const AddDoctorSchedulePage = () => {
                 name="time"
                 value={formData.time}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="10:00 AM - 02:00 PM"
                 className={inputClass}
               />
+
+              {errors.time && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.time}
+                </p>
+              )}
             </div>
 
             {/* Status */}

@@ -1,15 +1,34 @@
 import { useEffect, useState } from "react";
-import { getAboutUs, updateAboutUs } from "../../services/aboutUsService";
+import ReactQuill from "react-quill-new";
+import "react-quill-new/dist/quill.snow.css";
+import { toast } from "react-toastify";
+
+import {
+  getAboutUs,
+  updateAboutUs,
+} from "../../services/aboutUsService";
+
+// Toolbar options for the editor
+const quillModules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline", "strike"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    [{ align: [] }],
+    ["link"],
+    ["clean"],
+  ],
+};
 
 const AboutUsPage = () => {
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    phone: "",
-    website: "",
-  });
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [description, setDescription] =
+    useState("");
 
   // ===========================
   // Load About Us Data
@@ -18,48 +37,54 @@ const AboutUsPage = () => {
   useEffect(() => {
     const loadAboutUs = async () => {
       try {
-        const response = await getAboutUs();
+        const response =
+          await getAboutUs();
+
         if (response.data) {
-          setFormData({
-            title: response.data.title || "",
-            description: response.data.description || "",
-            phone: response.data.phone || "",
-            website: response.data.website || "",
-          });
+          setDescription(
+            response.data
+              .description || ""
+          );
         }
       } catch (error) {
         console.error(error);
+
+        toast.error(
+          "Failed to load About Us"
+        );
       } finally {
         setLoading(false);
       }
     };
+
     loadAboutUs();
   }, []);
-
-  // ===========================
-  // Handle Change
-  // ===========================
-
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
 
   // ===========================
   // Save
   // ===========================
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (
+    e
+  ) => {
     e.preventDefault();
+
     try {
       setSaving(true);
-      await updateAboutUs(formData);
-      alert("About Us Updated Successfully");
+
+      await updateAboutUs({
+        description,
+      });
+
+      toast.success(
+        "About Us Updated Successfully"
+      );
     } catch (error) {
       console.error(error);
-      alert("Failed To Update About Us");
+
+      toast.error(
+        "Failed To Update About Us"
+      );
     } finally {
       setSaving(false);
     }
@@ -70,17 +95,13 @@ const AboutUsPage = () => {
   // ===========================
 
   if (loading) {
-    return <div className="text-center py-10 text-lg">Loading About Us...</div>;
+    return (
+      <div className="text-center py-10 text-lg">
+        Loading About Us...
+      </div>
+    );
   }
-
-  // Shared input class
-  const inputClass = `
-    w-full h-[42px] border border-gray-300
-    rounded px-3 text-sm outline-none
-    focus:border-[#3c8dbc]
-  `;
-
-  return (
+return (
     <div>
       {/* Heading */}
       <h1 className="text-[24px] sm:text-[28px] font-light text-[#444] mb-4 text-center sm:text-left">
@@ -90,67 +111,19 @@ const AboutUsPage = () => {
       {/* Card */}
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-          {/* 2-column grid for Title + Phone + Website, full-width Description */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-            {/* Title */}
-            <div>
-              <label className="block font-semibold mb-2 text-sm">
-                Clinic Name
-              </label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block font-semibold mb-2 text-sm">
-                Phone Number
-              </label>
-              <input
-                type="text"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-
-            {/* Website */}
-            <div>
-              <label className="block font-semibold mb-2 text-sm">
-                Website
-              </label>
-              <input
-                type="text"
-                name="website"
-                value={formData.website}
-                onChange={handleChange}
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          {/* Description - full width */}
-          <div className="mb-5">
+          {/* Description */}
+          <div className="mb-6">
             <label className="block font-semibold mb-2 text-sm">
               Description
             </label>
-            <textarea
-              name="description"
-              rows="10"
-              value={formData.description}
-              onChange={handleChange}
-              className="
-                w-full border border-gray-300
-                rounded px-3 py-3 text-sm
-                resize-none outline-none
-                focus:border-[#3c8dbc]
-              "
+            <ReactQuill
+              theme="snow"
+              value={description}
+              onChange={setDescription}
+              modules={quillModules}
+              className="bg-white"
+              style={{ height: "400px", marginBottom: "42px" }}
             />
           </div>
 

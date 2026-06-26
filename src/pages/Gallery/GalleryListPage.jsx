@@ -5,8 +5,11 @@ import {
   useState,
 } from "react";
 
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
+
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 import {
   getAllGallery,
@@ -18,6 +21,7 @@ const GalleryListPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const recordsPerPage = 10;
 
@@ -28,10 +32,14 @@ const GalleryListPage = () => {
   const loadGallery = useCallback(async () => {
     try {
       setLoading(true);
+
       const response = await getAllGallery();
+
       setGallery(response?.data || []);
     } catch (error) {
       console.error(error);
+
+      toast.error("Failed to load gallery");
     } finally {
       setLoading(false);
     }
@@ -41,6 +49,7 @@ const GalleryListPage = () => {
     const fetchGallery = async () => {
       await loadGallery();
     };
+
     fetchGallery();
   }, [loadGallery]);
 
@@ -49,17 +58,27 @@ const GalleryListPage = () => {
   // =========================
 
   const handleDelete = async (galleryId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this image?"
-    );
-    if (!confirmDelete) return;
+    const result = await Swal.fire({
+      title: "Delete Image?",
+      text: "Are you sure you want to delete this image?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteGallery(galleryId);
+
+      toast.success("Image deleted successfully");
+
       await loadGallery();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete image");
+
+      toast.error("Failed to delete image");
     }
   };
 
@@ -73,7 +92,9 @@ const GalleryListPage = () => {
     );
   }, [gallery, search]);
 
-  const totalPages = Math.ceil(filteredGallery.length / recordsPerPage);
+  const totalPages = Math.ceil(
+    filteredGallery.length / recordsPerPage
+  );
 
   const paginatedGallery = filteredGallery.slice(
     (currentPage - 1) * recordsPerPage,
@@ -82,9 +103,12 @@ const GalleryListPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Gallery...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Gallery...
+      </div>
     );
   }
+
 
   return (
     <div>
@@ -162,7 +186,8 @@ const GalleryListPage = () => {
                   <img
                     src={item.imageUrl}
                     alt={item.title}
-                    className="w-16 h-16 object-cover rounded border flex-shrink-0"
+                    onClick={() => setPreviewImage({ src: item.imageUrl, alt: item.title })}
+                    className="w-16 h-16 object-contain bg-gray-50 rounded border flex-shrink-0 cursor-pointer"
                   />
                   <div className="grid grid-cols-[44px_1fr] gap-y-1.5 text-xs">
                     <span className="text-gray-400 font-medium">Title</span>
@@ -198,7 +223,8 @@ const GalleryListPage = () => {
                       <img
                         src={item.imageUrl}
                         alt={item.title}
-                        className="w-16 h-16 object-cover rounded border"
+                        onClick={() => setPreviewImage({ src: item.imageUrl, alt: item.title })}
+                        className="w-16 h-16 object-contain bg-gray-50 rounded border cursor-pointer"
                       />
                     </td>
                     <td className="px-3 py-3">{item.title}</td>
@@ -256,6 +282,27 @@ const GalleryListPage = () => {
         </div>
 
       </div>
+
+      {/* ── Image Preview Modal ── */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded cursor-default"
+          />
+        </div>
+      )}
     </div>
   );
 };

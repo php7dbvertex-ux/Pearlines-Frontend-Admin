@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { createFAQ } from "../../services/faqService";
 
 const AddFAQPage = () => {
   const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     question: "",
     answer: "",
@@ -31,27 +34,37 @@ const AddFAQPage = () => {
     e.preventDefault();
 
     if (!formData.question.trim()) {
-      return alert("Question is required");
+      toast.error("Question is required");
+      return;
     }
 
     if (!formData.answer.trim()) {
-      return alert("Answer is required");
+      toast.error("Answer is required");
+      return;
     }
 
     try {
       setSaving(true);
+
       await createFAQ(formData);
-      alert("FAQ Added Successfully");
-      navigate("/admin/faq");
+
+      toast.success("FAQ Added Successfully");
+
+      setTimeout(() => {
+        navigate("/admin/faq");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to add FAQ"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to add FAQ"
       );
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <div>

@@ -5,6 +5,9 @@ import {
   updateAppointment,
 } from "../../services/appointmentService";
 
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
+
 const AppointmentDetailPage = () => {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -43,10 +46,10 @@ const AppointmentDetailPage = () => {
     e.preventDefault();
     try {
       await updateAppointment(id, formData);
-      alert("Appointment Updated Successfully");
+      Swal.fire("Success", "Appointment Updated Successfully", "success");
     } catch (error) {
       console.error("Update Error:", error);
-      alert("Failed To Update Appointment");
+      Swal.fire("Error", "Failed To Update Appointment", "error");
     }
   };
 
@@ -56,6 +59,9 @@ const AppointmentDetailPage = () => {
 
   const labelClass = "block font-semibold text-[14px] sm:text-[16px] mb-2 text-[#444]";
   const inputClass = "w-full h-[42px] border border-gray-300 px-3 rounded outline-none focus:border-[#3c8dbc] text-sm sm:text-[15px]";
+
+  // Added: Prevent selecting dates before today
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div>
@@ -78,6 +84,7 @@ const AppointmentDetailPage = () => {
                 name="appointmentDate"
                 value={formData.appointmentDate}
                 onChange={handleChange}
+                min={today}
                 className={inputClass}
               />
             </div>

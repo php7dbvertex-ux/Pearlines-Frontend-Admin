@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { getGalleryById, updateGallery } from "../../services/galleryService";
-import { uploadImage } from "../../services/uploadService";
+import { toast } from "react-toastify";
+
+import {
+  getGalleryById,
+  updateGallery,
+} from "../../services/galleryService";
+
+import {
+  uploadImage,
+} from "../../services/uploadService";
 
 const EditGalleryPage = () => {
   const { id } = useParams();
@@ -25,7 +33,9 @@ const EditGalleryPage = () => {
     const loadGallery = async () => {
       try {
         const response = await getGalleryById(id);
+
         const item = response.data;
+
         setFormData({
           title: item.title || "",
           imageUrl: item.imageUrl || "",
@@ -33,7 +43,8 @@ const EditGalleryPage = () => {
         });
       } catch (error) {
         console.error(error);
-        alert("Failed to load image");
+
+        toast.error("Failed to load image");
       } finally {
         setLoading(false);
       }
@@ -59,19 +70,25 @@ const EditGalleryPage = () => {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
+
     if (!file) return;
 
     try {
       setUploading(true);
+
       const response = await uploadImage(file);
+
       setFormData((prev) => ({
         ...prev,
         imageUrl: response.data.imageUrl,
         publicId: response.data.publicId,
       }));
+
+      toast.success("Image uploaded successfully");
     } catch (error) {
       console.error(error);
-      alert("Image upload failed");
+
+      toast.error("Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -85,18 +102,28 @@ const EditGalleryPage = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      return alert("Title is required");
+      toast.error("Title is required");
+      return;
     }
 
     try {
       setSaving(true);
+
       await updateGallery(id, formData);
-      alert("Gallery Image Updated Successfully");
-      navigate("/admin/gallery-image");
+
+      toast.success(
+        "Gallery Image Updated Successfully"
+      );
+
+      setTimeout(() => {
+        navigate("/admin/gallery-image");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to update image"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to update image"
       );
     } finally {
       setSaving(false);
@@ -105,9 +132,12 @@ const EditGalleryPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Image...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Image...
+      </div>
     );
   }
+
 
   return (
     <div>

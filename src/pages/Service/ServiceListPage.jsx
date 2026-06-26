@@ -5,8 +5,11 @@ import {
   useState,
 } from "react";
 
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
+
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 import {
   getAllServices,
@@ -18,6 +21,7 @@ const ServiceListPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState(null);
 
   const recordsPerPage = 10;
 
@@ -28,10 +32,14 @@ const ServiceListPage = () => {
   const loadServices = useCallback(async () => {
     try {
       setLoading(true);
+
       const response = await getAllServices();
+
       setServices(response?.data || []);
     } catch (error) {
       console.error(error);
+
+      toast.error("Failed to load services");
     } finally {
       setLoading(false);
     }
@@ -41,6 +49,7 @@ const ServiceListPage = () => {
     const fetchData = async () => {
       await loadServices();
     };
+
     fetchData();
   }, [loadServices]);
 
@@ -49,17 +58,27 @@ const ServiceListPage = () => {
   // =========================
 
   const handleDelete = async (serviceId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this service?"
-    );
-    if (!confirmDelete) return;
+    const result = await Swal.fire({
+      title: "Delete Service?",
+      text: "Are you sure you want to delete this service?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Delete",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       await deleteService(serviceId);
+
+      toast.success("Service deleted successfully");
+
       await loadServices();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete service");
+
+      toast.error("Failed to delete service");
     }
   };
 
@@ -71,11 +90,15 @@ const ServiceListPage = () => {
     return services.filter(
       (service) =>
         service.title?.toLowerCase().includes(search.toLowerCase()) ||
-        service.description?.toLowerCase().includes(search.toLowerCase())
+        service.description
+          ?.toLowerCase()
+          .includes(search.toLowerCase())
     );
   }, [services, search]);
 
-  const totalPages = Math.ceil(filteredServices.length / recordsPerPage);
+  const totalPages = Math.ceil(
+    filteredServices.length / recordsPerPage
+  );
 
   const paginatedServices = filteredServices.slice(
     (currentPage - 1) * recordsPerPage,
@@ -84,9 +107,12 @@ const ServiceListPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Services...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Services...
+      </div>
     );
   }
+
 
   return (
     <div>
@@ -164,7 +190,8 @@ const ServiceListPage = () => {
                   <img
                     src={service.imageUrl}
                     alt={service.title}
-                    className="w-16 h-16 object-cover rounded border flex-shrink-0"
+                    onClick={() => setPreviewImage({ src: service.imageUrl, alt: service.title })}
+                    className="w-16 h-16 object-contain bg-gray-50 rounded border flex-shrink-0 cursor-pointer"
                   />
                   <div className="grid grid-cols-[76px_1fr] gap-y-1.5 text-xs">
                     <span className="text-gray-400 font-medium">Title</span>
@@ -208,7 +235,8 @@ const ServiceListPage = () => {
                       <img
                         src={service.imageUrl}
                         alt={service.title}
-                        className="w-16 h-16 object-cover rounded border"
+                        onClick={() => setPreviewImage({ src: service.imageUrl, alt: service.title })}
+                        className="w-16 h-16 object-contain bg-gray-50 rounded border cursor-pointer"
                       />
                     </td>
                     <td className="px-3 py-3">{service.title}</td>
@@ -272,6 +300,27 @@ const ServiceListPage = () => {
         </div>
 
       </div>
+
+      {/* ── Image Preview Modal ── */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded cursor-default"
+          />
+        </div>
+      )}
     </div>
   );
 };

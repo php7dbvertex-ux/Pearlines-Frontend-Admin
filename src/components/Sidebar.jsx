@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -16,9 +17,43 @@ import {
 
 import logo from "../assets/logo.png";
 
+import { getAllChats } from "../services/chatService";
+
 const Sidebar = ({
   onClose,
 }) => {
+  const [unreadChatCount, setUnreadChatCount] =
+    useState(0);
+
+  // -----------------------------
+  // Poll unread chat count
+  // -----------------------------
+
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      try {
+        const response = await getAllChats();
+
+        const chats = response.data || [];
+
+        const total = chats.reduce(
+          (sum, chat) => sum + (chat.unreadCount || 0),
+          0
+        );
+
+        setUnreadChatCount(total);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadUnreadCount();
+
+    const interval = setInterval(loadUnreadCount, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <aside
       className="
@@ -133,6 +168,7 @@ const Sidebar = ({
             <MessageCircle size={18} />
           }
           text="Chat"
+          badge={unreadChatCount}
           onClose={onClose}
         />
 
@@ -232,6 +268,7 @@ const SidebarLink = ({
   to,
   icon,
   text,
+  badge,
   onClose,
 }) => {
   return (
@@ -257,7 +294,28 @@ const SidebarLink = ({
         }
       >
         {icon}
-        <span>{text}</span>
+        <span className="flex-1">{text}</span>
+
+        {badge > 0 && (
+          <span
+            className="
+              bg-red-500
+              text-white
+              text-[11px]
+              font-semibold
+              rounded-full
+              min-w-[20px]
+              h-[20px]
+              px-1.5
+              flex
+              items-center
+              justify-center
+              shrink-0
+            "
+          >
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
       </NavLink>
     </li>
   );

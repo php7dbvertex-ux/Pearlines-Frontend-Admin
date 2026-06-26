@@ -67,6 +67,10 @@ import EditGalleryPage from "../pages/Gallery/EditGalleryPage";
 import AddNotificationPage from "../pages/Notification/AddNotificationPage";
 import AddCustomNotificationPage from "../pages/Notification/AddCustomNotificationPage";
 
+import EditProfilePage from "../pages/Profile/EditProfilePage";
+
+import CustomPaymentPage from "../pages/payment/CustomPaymentPage";
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -93,6 +97,8 @@ const AppRoutes = () => {
 
         <Route path="faq/add" element={<AddFAQPage />} />
 
+        <Route path="edit-profile" element={<EditProfilePage />} />
+
         <Route path="faq/edit/:id" element={<EditFAQPage />} />
 
         <Route path="service/add" element={<AddServicePage />} />
@@ -106,11 +112,11 @@ const AppRoutes = () => {
           path="custom-notification/add"
           element={<AddCustomNotificationPage />}
         />
-
+        <Route path="/admin/custom-payment" element={<CustomPaymentPage />} />
         <Route path="doctor/add" element={<AddDoctorPage />} />
 
         <Route path="tip/add" element={<AddTipPage />} />
-        <Route path="tip/edit/:id" element={<Edittippage.jsx />} />
+        <Route path="tip/edit/:id" element={<Edittippage />} />
 
         <Route path="gallery-image/add" element={<AddGalleryPage />} />
 

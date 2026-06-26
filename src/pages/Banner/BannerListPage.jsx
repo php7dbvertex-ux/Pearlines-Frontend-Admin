@@ -13,11 +13,17 @@ import {
   deleteBanner,
 } from "../../services/bannerService";
 
+import { toast } from "react-toastify";
+
+import Swal from "sweetalert2";
+
+
 const BannerListPage = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const recordsPerPage = 10;
 
@@ -25,17 +31,18 @@ const BannerListPage = () => {
   // Load Banners
   // =========================
 
-  const loadBanners = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await getAllBanners();
-      setBanners(response?.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+const loadBanners = useCallback(async () => {
+  try {
+    setLoading(true);
+    const response = await getAllBanners();
+    setBanners(response?.data || []);
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load banners");
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     const timer = setTimeout(() => { loadBanners(); }, 0);
@@ -45,20 +52,30 @@ const BannerListPage = () => {
   // =========================
   // Delete Banner
   // =========================
+const handleDelete = async (bannerId) => {
+  const result = await Swal.fire({
+    title: "Delete Banner?",
+    text: "Are you sure you want to delete this banner?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Delete",
+    cancelButtonText: "Cancel",
+  });
 
-  const handleDelete = async (bannerId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this banner?"
-    );
-    if (!confirmDelete) return;
-    try {
-      await deleteBanner(bannerId);
-      await loadBanners();
-    } catch (error) {
-      console.error(error);
-      alert("Failed to delete banner");
-    }
-  };
+  if (!result.isConfirmed) return;
+
+  try {
+    await deleteBanner(bannerId);
+
+    await loadBanners();
+
+    toast.success("Banner deleted successfully");
+  } catch (error) {
+    console.error(error);
+
+    toast.error("Failed to delete banner");
+  }
+};
 
   // =========================
   // Search
@@ -165,11 +182,12 @@ const BannerListPage = () => {
                   <span>{(effectiveCurrentPage - 1) * recordsPerPage + index + 1}</span>
 
                   <span className="text-gray-400 text-xs font-medium">Image</span>
-                  <img
-                    src={banner.imageUrl}
-                    alt={banner.title}
-                    className="w-16 h-16 object-cover rounded border"
-                  />
+             <img
+  src={banner.imageUrl}
+  alt={banner.title}
+  onClick={() => setSelectedImage(banner.imageUrl)}
+  className="w-20 h-20 object-contain rounded border cursor-pointer bg-white"
+/>
 
                   <span className="text-gray-400 text-xs font-medium">Created</span>
                   <span>{new Date(banner.createdAt).toLocaleDateString()}</span>
@@ -204,10 +222,11 @@ const BannerListPage = () => {
                     </td>
                     <td className="px-3 py-3">
                       <img
-                        src={banner.imageUrl}
-                        alt={banner.title}
-                        className="w-16 h-16 object-cover rounded border"
-                      />
+  src={banner.imageUrl}
+  alt={banner.title}
+  onClick={() => setSelectedImage(banner.imageUrl)}
+  className="w-20 h-20 object-contain rounded border cursor-pointer bg-white"
+/>
                     </td>
                     <td className="px-3 py-3">{banner.title}</td>
                     <td className="px-3 py-3">
@@ -266,6 +285,31 @@ const BannerListPage = () => {
           </div>
         </div>
       </div>
+
+      {selectedImage && (
+  <div
+    className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+    onClick={() => setSelectedImage(null)}
+  >
+    <div
+      className="relative max-w-5xl max-h-[90vh]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        onClick={() => setSelectedImage(null)}
+        className="absolute -top-10 right-0 text-white text-3xl"
+      >
+        ×
+      </button>
+
+      <img
+        src={selectedImage}
+        alt="Preview"
+        className="max-w-full max-h-[85vh] object-contain rounded bg-white"
+      />
+    </div>
+  </div>
+)}
     </div>
   );
 };

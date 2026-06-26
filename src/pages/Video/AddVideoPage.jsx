@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { createVideo } from "../../services/videoService";
 
 const AddVideoPage = () => {
@@ -31,22 +33,31 @@ const AddVideoPage = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      return alert("Video title is required");
+      toast.error("Video title is required");
+      return;
     }
 
     if (!formData.videoUrl.trim()) {
-      return alert("Video URL is required");
+      toast.error("Video URL is required");
+      return;
     }
 
     try {
       setSaving(true);
+
       await createVideo(formData);
-      alert("Video Added Successfully");
-      navigate("/admin/video");
+
+      toast.success("Video Added Successfully");
+
+      setTimeout(() => {
+        navigate("/admin/video");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to add video"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to add video"
       );
     } finally {
       setSaving(false);

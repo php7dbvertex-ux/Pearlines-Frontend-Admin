@@ -12,6 +12,8 @@ import {
   getAllSchedules,
   deleteSchedule,
 } from "../../services/doctorScheduleService";
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 const DoctorSchedulePage = () => {
   const [schedules, setSchedules] = useState([]);
@@ -45,19 +47,30 @@ const DoctorSchedulePage = () => {
   // Delete Schedule
   // =========================
 
-  const handleDelete = async (scheduleId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this schedule?"
-    );
-    if (!confirmDelete) return;
-    try {
-      await deleteSchedule(scheduleId);
-      loadSchedules();
-    } catch (error) {
-      console.error(error);
-    }
-  };
+const handleDelete = async (scheduleId) => {
+  const result = await Swal.fire({
+    title: "Delete Schedule?",
+    text: "Are you sure you want to delete this schedule?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Delete",
+    cancelButtonText: "Cancel",
+  });
 
+  if (!result.isConfirmed) return;
+
+  try {
+    await deleteSchedule(scheduleId);
+
+    toast.success("Schedule deleted successfully");
+
+    loadSchedules();
+  } catch (error) {
+    console.error(error);
+
+    toast.error("Failed to delete schedule");
+  }
+};
   // =========================
   // Search
   // =========================

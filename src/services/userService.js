@@ -1,24 +1,30 @@
+// src/services/userService.js
+
 import api from "../config/api";
 
-// Get All Users
-export const getAllUsers = async () => {
-  const response = await api.get("/users");
-  return response.data;
-};
+const ADMIN_TOKEN = "my-secret-admin-token";
 
-// Delete User
-export const deleteUser = async (id) => {
-  const response = await api.delete(
-    `/users/${id}`
+export const getAllUsers = async () => {
+  const response = await api.get(
+    "/admin/users",
+    {
+      headers: {
+        Authorization: ADMIN_TOKEN,
+      },
+    }
   );
 
   return response.data;
 };
 
-// Get Single User
-export const getUserById = async (id) => {
-  const response = await api.get(
-    `/users/${id}`
+export const deleteUser = async (id) => {
+  const response = await api.delete(
+    `/admin/users/${id}`,
+    {
+      headers: {
+        Authorization: ADMIN_TOKEN,
+      },
+    }
   );
 
   return response.data;

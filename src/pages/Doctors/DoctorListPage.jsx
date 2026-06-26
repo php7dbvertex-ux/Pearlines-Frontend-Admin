@@ -13,6 +13,9 @@ import {
   deleteDoctor,
 } from "../../services/doctorService";
 
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
+
 const DoctorListPage = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,18 +51,30 @@ const DoctorListPage = () => {
   // Delete Doctor
   // ===========================
 
-  const handleDelete = async (doctorId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this doctor?"
-    );
-    if (!confirmDelete) return;
-    try {
-      await deleteDoctor(doctorId);
-      loadDoctors();
-    } catch (error) {
-      console.error("Delete Error:", error);
-    }
-  };
+const handleDelete = async (doctorId) => {
+  const result = await Swal.fire({
+    title: "Delete Doctor?",
+    text: "Are you sure you want to delete this doctor?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, Delete",
+    cancelButtonText: "Cancel",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await deleteDoctor(doctorId);
+
+    toast.success("Doctor deleted successfully");
+
+    loadDoctors();
+  } catch (error) {
+    console.error("Delete Error:", error);
+
+    toast.error("Failed to delete doctor");
+  }
+};
 
   // ===========================
   // Search

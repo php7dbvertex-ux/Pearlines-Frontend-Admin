@@ -1,14 +1,60 @@
-import { UserCircle2, Mail, Phone } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  UserCircle2,
+  Mail,
+  Phone,
+} from "lucide-react";
+import {
+  useEffect,
+  useState,
+} from "react";
+import api from "../../config/api";
 
 const ProfilePage = () => {
+  const navigate = useNavigate();
+
+  const [admin, setAdmin] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile =
+    async () => {
+      try {
+        const response =
+          await api.get(
+            "/admin/profile"
+          );
+
+        setAdmin(
+          response.data.data
+        );
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  if (loading) {
+    return (
+      <div className="text-center py-10">
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div>
-      {/* Page Title */}
       <h1 className="text-[36px] font-light text-[#444] mb-6">
         User Profile
       </h1>
 
-      {/* Card */}
       <div
         className="
           max-w-4xl
@@ -21,15 +67,27 @@ const ProfilePage = () => {
           overflow-hidden
         "
       >
-        {/* Top Section */}
         <div className="flex flex-col items-center py-10">
-          <UserCircle2
-            size={120}
-            className="text-[#3c8dbc]"
-          />
+          {admin?.profileImage ? (
+            <img
+              src={admin.profileImage}
+              alt="profile"
+              className="
+                w-[120px]
+                h-[120px]
+                rounded-full
+                object-cover
+              "
+            />
+          ) : (
+            <UserCircle2
+              size={120}
+              className="text-[#3c8dbc]"
+            />
+          )}
 
           <h2 className="text-4xl mt-3 text-gray-700">
-            Admin
+            {admin?.name}
           </h2>
 
           <p className="text-gray-500 mt-1">
@@ -37,7 +95,6 @@ const ProfilePage = () => {
           </p>
         </div>
 
-        {/* Details */}
         <div className="px-6 pb-6">
           <div className="border-t py-4 flex justify-between">
             <span className="font-semibold">
@@ -45,7 +102,7 @@ const ProfilePage = () => {
             </span>
 
             <span className="text-gray-700">
-              Admin
+              {admin?.name}
             </span>
           </div>
 
@@ -56,7 +113,7 @@ const ProfilePage = () => {
             </span>
 
             <span className="text-[#3c8dbc]">
-              admin@gmail.com
+              {admin?.email}
             </span>
           </div>
 
@@ -67,12 +124,15 @@ const ProfilePage = () => {
             </span>
 
             <span className="text-gray-700">
-              +91 9876543210
+              {admin?.mobileNo || "N/A"}
             </span>
           </div>
 
           <div className="border-t pt-5">
             <button
+              onClick={() =>
+                navigate("/admin/edit-profile")
+              }
               className="
                 bg-[#3c8dbc]
                 text-white

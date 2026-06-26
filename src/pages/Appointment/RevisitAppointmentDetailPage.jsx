@@ -4,6 +4,8 @@ import {
   getAppointmentById,
   updateAppointment,
 } from "../../services/appointmentService";
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 const RevisitAppointmentDetailPage = () => {
   const { id } = useParams();
@@ -45,19 +47,28 @@ const RevisitAppointmentDetailPage = () => {
     e.preventDefault();
     try {
       await updateAppointment(id, formData);
-      alert("Revisit Appointment Updated Successfully");
+      Swal.fire("Success", "Revisit Appointment Updated Successfully", "success");
     } catch (error) {
       console.error(error);
-      alert("Failed To Update Revisit Appointment");
+      Swal.fire("Error", "Failed To Update Revisit Appointment", "error");
     }
   };
 
   if (loading) {
-    return <div className="text-center py-10 text-lg">Loading Revisit Appointment...</div>;
+    return (
+      <div className="text-center py-10 text-lg">
+        Loading Revisit Appointment...
+      </div>
+    );
   }
 
-  const labelClass = "block font-semibold text-[14px] sm:text-[16px] mb-2 text-[#444]";
-  const inputClass = "w-full max-w-[600px] h-[42px] border border-gray-300 px-3 rounded outline-none focus:border-[#3c8dbc] text-sm sm:text-[15px]";
+  const labelClass =
+    "block font-semibold text-[14px] sm:text-[16px] mb-2 text-[#444]";
+  const inputClass =
+    "w-full max-w-[600px] h-[42px] border border-gray-300 px-3 rounded outline-none focus:border-[#3c8dbc] text-sm sm:text-[15px]";
+
+  // Prevent selecting dates before today
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div>
@@ -68,7 +79,6 @@ const RevisitAppointmentDetailPage = () => {
 
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-
           {/* Appointment Date */}
           <div className="mb-5">
             <label className={labelClass}>Appointment Date :</label>
@@ -77,6 +87,7 @@ const RevisitAppointmentDetailPage = () => {
               name="appointmentDate"
               value={formData.appointmentDate}
               onChange={handleChange}
+              min={today}
               className={inputClass}
             />
           </div>
@@ -90,10 +101,18 @@ const RevisitAppointmentDetailPage = () => {
               onChange={handleChange}
               className={inputClass}
             >
-              <option value="10:00 AM - 10:30 AM">10:00 AM - 10:30 AM</option>
-              <option value="10:30 AM - 11:00 AM">10:30 AM - 11:00 AM</option>
-              <option value="11:00 AM - 11:30 AM">11:00 AM - 11:30 AM</option>
-              <option value="11:30 AM - 12:00 PM">11:30 AM - 12:00 PM</option>
+              <option value="10:00 AM - 10:30 AM">
+                10:00 AM - 10:30 AM
+              </option>
+              <option value="10:30 AM - 11:00 AM">
+                10:30 AM - 11:00 AM
+              </option>
+              <option value="11:00 AM - 11:30 AM">
+                11:00 AM - 11:30 AM
+              </option>
+              <option value="11:30 AM - 12:00 PM">
+                11:30 AM - 12:00 PM
+              </option>
             </select>
           </div>
 
@@ -138,6 +157,7 @@ const RevisitAppointmentDetailPage = () => {
               name="nextVisit"
               value={formData.nextVisit}
               onChange={handleChange}
+              min={today}
               className={inputClass}
             />
           </div>

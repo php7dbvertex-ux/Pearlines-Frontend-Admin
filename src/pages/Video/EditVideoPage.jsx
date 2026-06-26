@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { getVideoById, updateVideo } from "../../services/videoService";
 
 const EditVideoPage = () => {
@@ -22,14 +24,17 @@ const EditVideoPage = () => {
     const loadVideo = async () => {
       try {
         const response = await getVideoById(id);
+
         const video = response.data;
+
         setFormData({
           title: video.title || "",
           videoUrl: video.videoUrl || "",
         });
       } catch (error) {
         console.error(error);
-        alert("Failed to load video");
+
+        toast.error("Failed to load video");
       } finally {
         setLoading(false);
       }
@@ -57,22 +62,31 @@ const EditVideoPage = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      return alert("Video title is required");
+      toast.error("Video title is required");
+      return;
     }
 
     if (!formData.videoUrl.trim()) {
-      return alert("Video URL is required");
+      toast.error("Video URL is required");
+      return;
     }
 
     try {
       setSaving(true);
+
       await updateVideo(id, formData);
-      alert("Video Updated Successfully");
-      navigate("/admin/video");
+
+      toast.success("Video Updated Successfully");
+
+      setTimeout(() => {
+        navigate("/admin/video");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to update video"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to update video"
       );
     } finally {
       setSaving(false);
@@ -81,9 +95,12 @@ const EditVideoPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Video...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Video...
+      </div>
     );
   }
+
 
   return (
     <div>

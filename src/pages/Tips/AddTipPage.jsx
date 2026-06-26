@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { createTip } from "../../services/tipService";
 import { uploadImage } from "../../services/uploadService";
 
@@ -36,15 +38,20 @@ const AddTipPage = () => {
 
     try {
       setUploading(true);
+
       const response = await uploadImage(file);
+
       setFormData((prev) => ({
         ...prev,
         imageUrl: response.data.imageUrl,
         publicId: response.data.publicId,
       }));
+
+      toast.success("Image uploaded successfully");
     } catch (error) {
       console.error(error);
-      alert("Image upload failed");
+
+      toast.error("Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -58,22 +65,31 @@ const AddTipPage = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      return alert("Tip title is required");
+      toast.error("Tip title is required");
+      return;
     }
 
     if (!formData.imageUrl) {
-      return alert("Please upload image");
+      toast.error("Please upload image");
+      return;
     }
 
     try {
       setSaving(true);
+
       await createTip(formData);
-      alert("Tip Added Successfully");
-      navigate("/admin/tips");
+
+      toast.success("Tip Added Successfully");
+
+      setTimeout(() => {
+        navigate("/admin/tips");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to add tip"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to add tip"
       );
     } finally {
       setSaving(false);

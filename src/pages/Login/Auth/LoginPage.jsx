@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import logo from "../../../assets/logo.png";
 import { useNavigate } from "react-router-dom";
+import api from "../../../config/api";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -19,22 +20,40 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (
-      formData.email === "admin@gmail.com" &&
-      formData.password === "admin123"
-    ) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("adminEmail", "admin@gmail.com");
+  try {
+    const response = await api.post(
+      "/admin/login",
+      formData
+    );
 
-      navigate("/admin/dashboard");
-    } else {
-      alert("Invalid Email or Password");
+    if (response.data.success) {
+      localStorage.setItem(
+        "adminToken",
+        response.data.token
+      );
+
+      localStorage.setItem(
+        "adminData",
+        JSON.stringify(
+          response.data.admin
+        )
+      );
+
+      navigate(
+        "/admin/dashboard"
+      );
     }
-  };
-
+  } catch (error) {
+    alert(
+      error.response?.data
+        ?.message ||
+        "Login Failed"
+    );
+  }
+};
   const navigate = useNavigate();
 
   return (

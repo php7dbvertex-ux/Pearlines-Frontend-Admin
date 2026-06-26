@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import { toast } from "react-toastify";
+
 import { getTipById, updateTip } from "../../services/tipService";
 import { uploadImage } from "../../services/uploadService";
 
@@ -26,6 +28,7 @@ const EditTipPage = () => {
       try {
         const response = await getTipById(id);
         const tip = response.data;
+
         setFormData({
           title: tip.title || "",
           imageUrl: tip.imageUrl || "",
@@ -33,7 +36,7 @@ const EditTipPage = () => {
         });
       } catch (error) {
         console.error(error);
-        alert("Failed to load tip");
+        toast.error("Failed to load tip");
       } finally {
         setLoading(false);
       }
@@ -63,15 +66,19 @@ const EditTipPage = () => {
 
     try {
       setUploading(true);
+
       const response = await uploadImage(file);
+
       setFormData((prev) => ({
         ...prev,
         imageUrl: response.data.imageUrl,
         publicId: response.data.publicId,
       }));
+
+      toast.success("Image uploaded successfully");
     } catch (error) {
       console.error(error);
-      alert("Image upload failed");
+      toast.error("Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -85,18 +92,26 @@ const EditTipPage = () => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      return alert("Tip title is required");
+      toast.error("Tip title is required");
+      return;
     }
 
     try {
       setSaving(true);
+
       await updateTip(id, formData);
-      alert("Tip Updated Successfully");
-      navigate("/admin/tips");
+
+      toast.success("Tip Updated Successfully");
+
+      setTimeout(() => {
+        navigate("/admin/tips");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(
-        error?.response?.data?.message || "Failed to update tip"
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to update tip"
       );
     } finally {
       setSaving(false);
@@ -105,7 +120,9 @@ const EditTipPage = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-10 text-lg">Loading Tip...</div>
+      <div className="text-center py-10 text-lg">
+        Loading Tip...
+      </div>
     );
   }
 

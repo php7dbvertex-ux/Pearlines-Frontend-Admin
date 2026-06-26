@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { toast } from "react-toastify";
+
 import { createNotification } from "../../services/notificationService";
 import { uploadImage } from "../../services/uploadService";
 
@@ -8,6 +11,7 @@ const AddNotificationPage = () => {
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     message: "",
@@ -24,18 +28,25 @@ const AddNotificationPage = () => {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
+
     if (!file) return;
+
     try {
       setUploading(true);
+
       const response = await uploadImage(file);
+
       setFormData((prev) => ({
         ...prev,
         imageUrl: response.data.imageUrl,
         publicId: response.data.publicId,
       }));
+
+      toast.success("Image uploaded successfully");
     } catch (error) {
       console.error(error);
-      alert("Image upload failed");
+
+      toast.error("Image upload failed");
     } finally {
       setUploading(false);
     }
@@ -43,17 +54,34 @@ const AddNotificationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title.trim())   return alert("Notification title is required");
-    if (!formData.message.trim()) return alert("Notification message is required");
+
+    if (!formData.title.trim()) {
+      toast.error("Notification title is required");
+      return;
+    }
+
+    if (!formData.message.trim()) {
+      toast.error("Notification message is required");
+      return;
+    }
 
     try {
       setSaving(true);
+
       await createNotification(formData);
-      alert("Notification sent successfully");
-      navigate("/admin/send-notification");
+
+      toast.success("Notification sent successfully");
+
+      setTimeout(() => {
+        navigate("/admin/send-notification");
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(error?.response?.data?.message || "Failed to send notification");
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to send notification"
+      );
     } finally {
       setSaving(false);
     }
@@ -65,7 +93,6 @@ const AddNotificationPage = () => {
     rounded px-3 text-sm outline-none
     focus:border-[#3c8dbc]
   `;
-
   return (
     <div>
       {/* Heading */}

@@ -5,8 +5,11 @@ import {
   useState,
 } from "react";
 
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, X } from "lucide-react";
 import { Link } from "react-router-dom";
+
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 import {
   getAllCustomNotifications,
@@ -19,62 +22,149 @@ const CustomNotificationListPage = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [previewImage, setPreviewImage] =
+    useState(null);
+
   const recordsPerPage = 10;
 
-  const loadNotifications = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const response = await getAllCustomNotifications();
-      setNotifications(response?.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // =========================
+  // Load Notifications
+  // =========================
+
+  const loadNotifications =
+    useCallback(
+      async (showLoading = true) => {
+        try {
+          if (showLoading)
+            setLoading(true);
+
+          const response =
+            await getAllCustomNotifications();
+
+          setNotifications(
+            response?.data || []
+          );
+        } catch (error) {
+          console.error(error);
+
+          toast.error(
+            "Failed to load notifications"
+          );
+        } finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      await loadNotifications(false);
-    };
+    const fetchNotifications =
+      async () => {
+        await loadNotifications(
+          false
+        );
+      };
+
     fetchNotifications();
   }, [loadNotifications]);
 
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this notification?"
-    );
-    if (!confirmDelete) return;
+  // =========================
+  // Delete Notification
+  // =========================
+
+  const handleDelete = async (
+    id
+  ) => {
+    const result =
+      await Swal.fire({
+        title:
+          "Delete Notification?",
+        text:
+          "Are you sure you want to delete this notification?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText:
+          "Yes, Delete",
+        cancelButtonText:
+          "Cancel",
+      });
+
+    if (!result.isConfirmed)
+      return;
+
     try {
-      await deleteCustomNotification(id);
+      await deleteCustomNotification(
+        id
+      );
+
+      toast.success(
+        "Notification deleted successfully"
+      );
+
       await loadNotifications();
     } catch (error) {
       console.error(error);
-      alert("Failed to delete notification");
+
+      toast.error(
+        "Failed to delete notification"
+      );
     }
   };
 
-  const filteredNotifications = useMemo(() => {
-    return notifications.filter(
-      (item) =>
-        item.userId?.mobileNo?.toLowerCase().includes(search.toLowerCase()) ||
-        item.userId?.email?.toLowerCase().includes(search.toLowerCase()) ||
-        item.title?.toLowerCase().includes(search.toLowerCase()) ||
-        item.message?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [notifications, search]);
+  // =========================
+  // Search & Pagination
+  // =========================
 
-  const totalPages = Math.ceil(filteredNotifications.length / recordsPerPage);
-  const effectiveCurrentPage = Math.min(Math.max(currentPage, 1), totalPages || 1);
-  const paginatedNotifications = filteredNotifications.slice(
-    (effectiveCurrentPage - 1) * recordsPerPage,
-    effectiveCurrentPage * recordsPerPage
-  );
+  const filteredNotifications =
+    useMemo(() => {
+      const keyword =
+        search.toLowerCase();
+
+      return notifications.filter(
+        (item) =>
+          item.userId?.name
+            ?.toLowerCase()
+            .includes(keyword) ||
+          item.userId?.mobileNo?.includes(
+            search
+          ) ||
+          item.userId?.email
+            ?.toLowerCase()
+            .includes(keyword) ||
+          item.title
+            ?.toLowerCase()
+            .includes(keyword) ||
+          item.message
+            ?.toLowerCase()
+            .includes(keyword)
+      );
+    }, [notifications, search]);
+
+  const totalPages =
+    Math.ceil(
+      filteredNotifications.length /
+        recordsPerPage
+    );
+
+  const effectiveCurrentPage =
+    Math.min(
+      Math.max(currentPage, 1),
+      totalPages || 1
+    );
+
+  const paginatedNotifications =
+    filteredNotifications.slice(
+      (effectiveCurrentPage - 1) *
+        recordsPerPage,
+      effectiveCurrentPage *
+        recordsPerPage
+    );
 
   if (loading) {
     return (
       <div className="text-center py-10 text-lg">
-        Loading Custom Notifications...
+        Loading Custom
+        Notifications...
       </div>
     );
   }
@@ -108,7 +198,7 @@ const CustomNotificationListPage = () => {
         <div className="flex justify-end mb-4">
           <input
             type="text"
-            placeholder="Search..."
+            placeholder="Search by name, mobile, email, title..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="
@@ -145,18 +235,22 @@ const CustomNotificationListPage = () => {
                   <span className="text-gray-400 text-xs font-medium">S.No</span>
                   <span>{(effectiveCurrentPage - 1) * recordsPerPage + index + 1}</span>
 
-                  <span className="text-gray-400 text-xs font-medium">Mobile</span>
-                  <span>{item.userId?.mobileNo || "-"}</span>
+                  <span className="text-gray-400 text-xs font-medium">Name</span>
+<span>{item.userId?.name || "-"}</span>
 
-                  <span className="text-gray-400 text-xs font-medium">Email</span>
-                  <span className="break-all">{item.userId?.email || "-"}</span>
+<span className="text-gray-400 text-xs font-medium">Mobile</span>
+<span>{item.userId?.mobileNo || "-"}</span>
+
+<span className="text-gray-400 text-xs font-medium">Email</span>
+<span className="break-all">{item.userId?.email || "-"}</span>
 
                   <span className="text-gray-400 text-xs font-medium">Image</span>
                   {item.imageUrl ? (
                     <img
                       src={item.imageUrl}
                       alt="notification"
-                      className="w-16 h-16 object-cover rounded border"
+                      onClick={() => setPreviewImage({ src: item.imageUrl, alt: item.title })}
+                      className="w-16 h-16 object-contain bg-gray-50 rounded border cursor-pointer"
                     />
                   ) : (
                     <span>-</span>
@@ -177,6 +271,7 @@ const CustomNotificationListPage = () => {
             <thead>
               <tr className="bg-gray-50 border-b">
                 <th className="px-3 py-2 text-left">S.No</th>
+                <th className="px-3 py-2 text-left">Name</th>
                 <th className="px-3 py-2 text-left">Mobile No</th>
                 <th className="px-3 py-2 text-left">Email</th>
                 <th className="px-3 py-2 text-left">Title</th>
@@ -192,9 +287,21 @@ const CustomNotificationListPage = () => {
                     <td className="px-3 py-3">
                       {(effectiveCurrentPage - 1) * recordsPerPage + index + 1}
                     </td>
-                    <td className="px-3 py-3">{item.userId?.mobileNo || "-"}</td>
-                    <td className="px-3 py-3">{item.userId?.email || "-"}</td>
-                    <td className="px-3 py-3">{item.title}</td>
+                    <td className="px-3 py-3 font-medium">
+  {item.userId?.name || "-"}
+</td>
+
+<td className="px-3 py-3">
+  {item.userId?.mobileNo || "-"}
+</td>
+
+<td className="px-3 py-3">
+  {item.userId?.email || "-"}
+</td>
+
+<td className="px-3 py-3">
+  {item.title}
+</td>
                     <td className="px-3 py-3 max-w-[250px]">
                       <p className="line-clamp-2">{item.message}</p>
                     </td>
@@ -203,7 +310,8 @@ const CustomNotificationListPage = () => {
                         <img
                           src={item.imageUrl}
                           alt="notification"
-                          className="w-16 h-16 object-cover rounded border"
+                          onClick={() => setPreviewImage({ src: item.imageUrl, alt: item.title })}
+                          className="w-16 h-16 object-contain bg-gray-50 rounded border cursor-pointer"
                         />
                       ) : (
                         "-"
@@ -223,7 +331,7 @@ const CustomNotificationListPage = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-6 text-gray-500">
+                  <td colSpan="8" className="text-center py-6 text-gray-500">
                     No Notifications Found
                   </td>
                 </tr>
@@ -256,6 +364,27 @@ const CustomNotificationListPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Image Preview Modal ── */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 cursor-pointer"
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <X size={28} />
+          </button>
+          <img
+            src={previewImage.src}
+            alt={previewImage.alt}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded cursor-default"
+          />
+        </div>
+      )}
     </div>
   );
 };

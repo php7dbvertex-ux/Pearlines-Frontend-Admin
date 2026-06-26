@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { toast } from "react-toastify";
+
 import { createCustomNotification } from "../../services/customNotificationService";
 import { uploadImage } from "../../services/uploadService";
 import { getAllUsers } from "../../services/userService";
@@ -12,6 +15,7 @@ const AddCustomNotificationPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     message: "",
@@ -27,11 +31,24 @@ const AddCustomNotificationPage = () => {
     const loadUsers = async () => {
       try {
         const response = await getAllUsers();
-        setUsers(response.data || []);
+
+        console.log(
+          "Users API Response:",
+          response
+        );
+
+        setUsers(
+          response.users || []
+        );
       } catch (error) {
         console.error(error);
+
+        toast.error(
+          "Failed to load users"
+        );
       }
     };
+
     loadUsers();
   }, []);
 
@@ -41,10 +58,21 @@ const AddCustomNotificationPage = () => {
 
   const filteredUsers = useMemo(() => {
     if (!search.trim()) return [];
+
+    const keyword =
+      search.toLowerCase();
+
     return users.filter(
       (user) =>
-        user.mobileNo?.toLowerCase().includes(search.toLowerCase()) ||
-        user.email?.toLowerCase().includes(search.toLowerCase())
+        user.name
+          ?.toLowerCase()
+          .includes(keyword) ||
+        user.mobileNo
+          ?.toLowerCase()
+          .includes(keyword) ||
+        user.email
+          ?.toLowerCase()
+          .includes(keyword)
     );
   }, [users, search]);
 
@@ -55,7 +83,8 @@ const AddCustomNotificationPage = () => {
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.value,
     }));
   };
 
@@ -63,61 +92,122 @@ const AddCustomNotificationPage = () => {
   // Upload Image
   // =========================
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      setUploading(true);
-      const response = await uploadImage(file);
-      setFormData((prev) => ({
-        ...prev,
-        imageUrl: response.data.imageUrl,
-        publicId: response.data.publicId,
-      }));
-    } catch (error) {
-      console.error(error);
-      alert("Image upload failed");
-    } finally {
-      setUploading(false);
-    }
-  };
+  const handleImageUpload =
+    async (e) => {
+      const file =
+        e.target.files[0];
+
+      if (!file) return;
+
+      try {
+        setUploading(true);
+
+        const response =
+          await uploadImage(file);
+
+        setFormData((prev) => ({
+          ...prev,
+          imageUrl:
+            response.data.imageUrl,
+          publicId:
+            response.data.publicId,
+        }));
+
+        toast.success(
+          "Image uploaded successfully"
+        );
+      } catch (error) {
+        console.error(error);
+
+        toast.error(
+          "Image upload failed"
+        );
+      } finally {
+        setUploading(false);
+      }
+    };
 
   // =========================
   // Submit
   // =========================
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (
+    e
+  ) => {
     e.preventDefault();
 
-    if (!selectedUser)            return alert("Please select a user");
-    if (!formData.title.trim())   return alert("Notification title is required");
-    if (!formData.message.trim()) return alert("Notification message is required");
+    if (!selectedUser) {
+      toast.error(
+        "Please select a user"
+      );
+      return;
+    }
+
+    if (
+      !formData.title.trim()
+    ) {
+      toast.error(
+        "Notification title is required"
+      );
+      return;
+    }
+
+    if (
+      !formData.message.trim()
+    ) {
+      toast.error(
+        "Notification message is required"
+      );
+      return;
+    }
 
     try {
       setSaving(true);
+
       await createCustomNotification({
-        userId: selectedUser._id,
-        title: formData.title,
-        message: formData.message,
-        imageUrl: formData.imageUrl,
-        publicId: formData.publicId,
+        userId:
+          selectedUser._id,
+        title:
+          formData.title,
+        message:
+          formData.message,
+        imageUrl:
+          formData.imageUrl,
+        publicId:
+          formData.publicId,
       });
-      alert("Notification sent successfully");
-      navigate("/admin/custom-notification");
+
+      toast.success(
+        "Notification sent successfully"
+      );
+
+      setTimeout(() => {
+        navigate(
+          "/admin/custom-notification"
+        );
+      }, 1500);
     } catch (error) {
       console.error(error);
-      alert(error?.response?.data?.message || "Failed to send notification");
+
+      toast.error(
+        error?.response?.data
+          ?.message ||
+          "Failed to send notification"
+      );
     } finally {
       setSaving(false);
     }
   };
 
   // Shared input class
+
   const inputClass = `
     w-full border border-gray-300
     rounded px-3 py-2 text-sm outline-none
     focus:border-[#3c8dbc]
   `;
+
+
 
   return (
     <div>
@@ -135,41 +225,61 @@ const AddCustomNotificationPage = () => {
             <label className="block font-semibold mb-2 text-sm">
               Search User
             </label>
-            <input
-              type="text"
-              placeholder="Search by mobile or email"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={inputClass}
-            />
-
+           <input
+  type="text"
+  placeholder="Search by name, mobile or email"
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className={inputClass}
+/>
             {search && filteredUsers.length > 0 && (
               <div className="mt-2 border rounded max-h-[250px] overflow-y-auto">
-                {filteredUsers.map((user) => (
-                  <button
-                    type="button"
-                    key={user._id}
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setSearch("");
-                    }}
-                    className="w-full text-left px-3 py-3 text-sm hover:bg-gray-100 border-b"
-                  >
-                    {user.mobileNo} - {user.email}
-                  </button>
-                ))}
+               {filteredUsers.map((user) => (
+  <button
+    type="button"
+    key={user._id}
+    onClick={() => {
+      setSelectedUser(user);
+      setSearch("");
+    }}
+    className="w-full text-left px-3 py-3 text-sm hover:bg-gray-100 border-b"
+  >
+    <div className="font-medium">
+      {user.name}
+    </div>
+
+    <div className="text-gray-500 text-xs">
+      {user.mobileNo}
+    </div>
+
+    <div className="text-gray-500 text-xs">
+      {user.email}
+    </div>
+  </button>
+))}
               </div>
             )}
           </div>
 
           {/* Selected User - full width */}
-          {selectedUser && (
-            <div className="bg-gray-50 border rounded p-4 mb-5 text-sm">
-              <p><strong>Mobile:</strong> {selectedUser.mobileNo}</p>
-              <p><strong>Email:</strong> {selectedUser.email}</p>
-            </div>
-          )}
+         {selectedUser && (
+  <div className="bg-gray-50 border rounded p-4 mb-5 text-sm">
+    <p>
+      <strong>Name:</strong>{" "}
+      {selectedUser.name}
+    </p>
 
+    <p>
+      <strong>Mobile:</strong>{" "}
+      {selectedUser.mobileNo}
+    </p>
+
+    <p>
+      <strong>Email:</strong>{" "}
+      {selectedUser.email}
+    </p>
+  </div>
+)}
           {/* 2-column grid for Title + Image, full-width Message */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
 

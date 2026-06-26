@@ -58,39 +58,6 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
       <div className="flex items-center gap-3 sm:gap-6">
         {/* API Toggle */}
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setApiStatus(!apiStatus)}
-            className={`
-              relative
-              w-11
-              sm:w-12
-              h-6
-              rounded-full
-              transition-all
-              duration-300
-              ${apiStatus ? "bg-green-500" : "bg-red-500"}
-            `}
-          >
-            <span
-              className={`
-                absolute
-                top-[2px]
-                h-5
-                w-5
-                rounded-full
-                bg-white
-                transition-all
-                duration-300
-                ${apiStatus ? "left-[24px] sm:left-[26px]" : "left-[2px]"}
-              `}
-            />
-          </button>
-
-          <span className="hidden sm:inline text-white text-sm font-medium">
-            API: {apiStatus ? "ON" : "OFF"}
-          </span>
-        </div>
 
         {/* Profile */}
 
