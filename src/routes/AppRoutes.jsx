@@ -69,7 +69,7 @@ import AddCustomNotificationPage from "../pages/Notification/AddCustomNotificati
 
 import EditProfilePage from "../pages/Profile/EditProfilePage";
 
-import CustomPaymentPage from "../pages/payment/CustomPaymentPage";
+import CustomPaymentPage from "../pages/Payment/CustomPaymentPage";
 
 const AppRoutes = () => {
   return (
