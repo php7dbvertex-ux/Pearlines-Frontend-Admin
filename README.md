@@ -4,6 +4,10 @@
 
 ```http
 http://localhost:5000/api
+
+## Live Url
+
+https://pearlines-frontend-admin-tdhr.onrender.com
 ```
 
 ---

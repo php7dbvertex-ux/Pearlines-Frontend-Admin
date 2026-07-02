@@ -30,64 +30,81 @@ const ChangePasswordPage = () => {
 
     setError("");
   };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = async (
-    e
-  ) => {
-    e.preventDefault();
+  // Current password validation
+  if (!formData.currentPassword.trim()) {
+    const message = "Current Password is required.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
 
-    if (
-      formData.newPassword !==
-      formData.confirmPassword
-    ) {
-      const message =
-        "New Password and Confirm Password must be same.";
+  // New password validation
+  if (!formData.newPassword.trim()) {
+    const message = "New Password is required.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
 
-      setError(message);
+  // Confirm password validation
+  if (!formData.confirmPassword.trim()) {
+    const message = "Confirm Password is required.";
+    setError(message);
+    toast.error(message);
+    return;
+  }
 
-      toast.error(message);
+  // Match validation
+  if (formData.newPassword !== formData.confirmPassword) {
+    const message =
+      "New Password and Confirm Password must be the same.";
 
-      return;
-    }
+    setError(message);
+    toast.error(message);
+    return;
+  }
 
-    try {
-      setLoading(true);
+  // Optional: Prevent same password
+  if (formData.currentPassword === formData.newPassword) {
+    const message =
+      "New Password must be different from Current Password.";
 
-      const response =
-        await api.put(
-          "/admin/change-password",
-          {
-            oldPassword:
-              formData.currentPassword,
-            newPassword:
-              formData.newPassword,
-          }
-        );
+    setError(message);
+    toast.error(message);
+    return;
+  }
 
-      toast.success(
-        response.data.message
-      );
+  try {
+    setLoading(true);
 
-      setFormData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
+    const response = await api.put("/admin/change-password", {
+      oldPassword: formData.currentPassword,
+      newPassword: formData.newPassword,
+    });
 
-      setError("");
-    } catch (error) {
-      const errorMessage =
-        error.response?.data
-          ?.message ||
-        "Failed to change password";
+    toast.success(response.data.message);
 
-      setError(errorMessage);
+    setFormData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
 
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setError("");
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      "Failed to change password";
+
+    setError(errorMessage);
+    toast.error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div>
       <h1 className="text-[38px] font-light text-[#444] mb-6">

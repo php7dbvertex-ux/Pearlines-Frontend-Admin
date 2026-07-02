@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { getAllDoctors } from "../../services/doctorService";
 import { createSchedule } from "../../services/doctorScheduleService";
 
@@ -31,8 +32,10 @@ const AddDoctorSchedulePage = () => {
         setDoctors(response.data || []);
       } catch (error) {
         console.error(error);
+        toast.error("Failed to load doctors");
       }
     };
+
     loadDoctors();
   }, []);
 
@@ -92,16 +95,28 @@ const AddDoctorSchedulePage = () => {
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fill all required fields");
+      return;
+    }
 
     try {
       setLoading(true);
+
       await createSchedule(formData);
-      alert("Doctor Schedule Added Successfully");
+
+      toast.success(
+        "Doctor Schedule Added Successfully"
+      );
+
       navigate("/admin/doctor-schedule");
     } catch (error) {
       console.error(error);
-      alert(error?.response?.data?.message || "Failed to create schedule");
+
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to create schedule"
+      );
     } finally {
       setLoading(false);
     }
@@ -113,7 +128,6 @@ const AddDoctorSchedulePage = () => {
     rounded px-3 text-sm outline-none
     focus:border-[#3c8dbc]
   `;
-
   return (
     <div>
       {/* Heading */}

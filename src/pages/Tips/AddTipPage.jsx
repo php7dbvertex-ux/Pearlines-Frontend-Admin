@@ -128,23 +128,51 @@ const AddTipPage = () => {
           </div>
 
           {/* Upload */}
-          <div className="mb-5">
-            <label className="block font-semibold mb-2">
-              Tip Image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full sm:w-auto text-sm"
-            />
-            {uploading && (
-              <p className="mt-2 text-sm text-blue-600">
-                Uploading image...
-              </p>
-            )}
-          </div>
+{/* Upload */}
+<div className="mb-5">
+  <label className="block font-semibold mb-2">
+    Tip Image
+  </label>
 
+  <div className="flex items-center gap-3 flex-wrap">
+    <label
+      htmlFor="tipImage"
+      className="
+        bg-[#3c8dbc]
+        hover:bg-[#367fa9]
+        text-white
+        px-5
+        py-2
+        rounded
+        cursor-pointer
+        transition
+        text-sm
+        font-medium
+      "
+    >
+      Choose Image
+    </label>
+
+    <span className="text-sm text-gray-500">
+      {formData.imageUrl ? "Image Selected ✓" : "No file chosen"}
+    </span>
+
+    <input
+      id="tipImage"
+      type="file"
+      accept="image/*"
+      onChange={handleImageUpload}
+      className="hidden"
+    />
+  </div>
+
+  {uploading && (
+    <p className="mt-2 text-sm text-blue-600">
+      Uploading image...
+    </p>
+  )}
+</div>
+      
           {/* Preview */}
           {formData.imageUrl && (
             <div className="mb-6">

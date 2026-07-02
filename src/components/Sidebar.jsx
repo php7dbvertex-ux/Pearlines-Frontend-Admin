@@ -6,7 +6,11 @@ import {
   Calendar,
   Stethoscope,
   MessageCircle,
-  Image,
+  GalleryHorizontal,
+  Lightbulb,
+  Video,
+  Wrench,
+  Images,
   CreditCard,
   Bell,
   CircleHelp,
@@ -174,35 +178,35 @@ const Sidebar = ({
 
         <SidebarLink
           to="/admin/banner"
-          icon={<Image size={18} />}
+          icon={<GalleryHorizontal size={18} />}
           text="Banner"
           onClose={onClose}
         />
 
         <SidebarLink
           to="/admin/tips"
-          icon={<Image size={18} />}
+          icon={<Lightbulb size={18} />}
           text="Tips"
           onClose={onClose}
         />
 
         <SidebarLink
           to="/admin/video"
-          icon={<Image size={18} />}
+          icon={<Video size={18} />}
           text="Video"
           onClose={onClose}
         />
 
         <SidebarLink
           to="/admin/service"
-          icon={<Image size={18} />}
+          icon={<Wrench size={18} />}
           text="Service"
           onClose={onClose}
         />
 
         <SidebarLink
           to="/admin/gallery-image"
-          icon={<Image size={18} />}
+          icon={<Images size={18} />}
           text="Gallery Image"
           onClose={onClose}
         />

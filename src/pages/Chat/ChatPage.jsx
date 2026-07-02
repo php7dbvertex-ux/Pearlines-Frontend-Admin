@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search } from "lucide-react";
 
 import {
@@ -50,6 +51,14 @@ const ChatPage = () => {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
 
+  // Whether the initial chats fetch has completed at least once. We need
+  // this so the "open chat from navigation state" effect waits for real
+  // data instead of running against an empty array on first render.
+  const [chatsLoaded, setChatsLoaded] = useState(false);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Declared up top (was previously declared after the effect that used it)
   const messagesEndRef = useRef(null);
 
@@ -90,6 +99,8 @@ const ChatPage = () => {
       });
     } catch (error) {
       console.error(error);
+    } finally {
+      setChatsLoaded(true);
     }
   }, []);
 
@@ -199,6 +210,51 @@ const ChatPage = () => {
       console.error(error);
     }
   };
+
+  // Opens (or creates) the chat for a patient handed to us via navigation
+  // state — e.g. clicking "Chat" on a row in RevisitAppointmentPage.
+  // Mirrors handleUserClick, but takes patientName/mobileNo/image directly
+  // instead of looking a user up from the search list.
+  const openChatForPatient = useCallback(
+    async ({ mobileNo, patientName, image }) => {
+      const existingChat = chats.find((c) => c.mobileNo === mobileNo);
+
+      if (existingChat) {
+        await openChat(existingChat);
+        return;
+      }
+
+      try {
+        const response = await createChat({
+          patientName,
+          mobileNo,
+          image,
+        });
+        const chat = response.data;
+        selectedChatIdRef.current = chat._id;
+        setSelectedChat(chat);
+        await loadMessages(chat._id);
+        await loadChats();
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [chats, loadChats, loadMessages]
+  );
+
+  // If we were navigated here with a patient to open (e.g. from the
+  // "Chat" button on Revisit Appointments), wait until chats have loaded
+  // at least once, then find-or-create that chat and open it. We clear
+  // the navigation state afterwards so refreshing or revisiting this page
+  // later doesn't keep re-triggering this.
+  useEffect(() => {
+    const target = location.state;
+    if (!target?.mobileNo || !chatsLoaded) return;
+
+    openChatForPatient(target);
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, chatsLoaded]);
 
   const handleSend = async () => {
     if (!message.trim() || !selectedChat) return;

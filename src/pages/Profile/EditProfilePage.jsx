@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import api from "../../config/api";
 
 const EditProfilePage = () => {
+  const navigate = useNavigate();
+
   const [loading, setLoading] =
     useState(false);
 
@@ -64,10 +67,26 @@ const EditProfilePage = () => {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // Mobile number: strip non-digits and cap at 10 digits
+    // as the admin types, so letters/symbols and an 11th
+    // digit simply can't be entered.
+    if (name === "mobileNo") {
+      const digitsOnly = value
+        .replace(/\D/g, "")
+        .slice(0, 10);
+
+      setFormData((prev) => ({
+        ...prev,
+        mobileNo: digitsOnly,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]:
-        e.target.value,
+      [name]: value,
     }));
   };
 
@@ -90,6 +109,18 @@ const EditProfilePage = () => {
     e
   ) => {
     e.preventDefault();
+
+    // Mobile number must be exactly 10 digits — typing is
+    // capped at 10, but it could still be shorter than 10.
+    if (
+      formData.mobileNo &&
+      formData.mobileNo.length !== 10
+    ) {
+      toast.error(
+        "Mobile number must be exactly 10 digits"
+      );
+      return;
+    }
 
     try {
       setLoading(true);
@@ -142,7 +173,7 @@ const EditProfilePage = () => {
         "Profile Updated Successfully"
       );
 
-      fetchProfile();
+      navigate("/admin/profile");
     } catch (error) {
       console.log(error);
 
@@ -262,6 +293,8 @@ const EditProfilePage = () => {
               <input
                 type="text"
                 name="mobileNo"
+                inputMode="numeric"
+                maxLength={10}
                 value={
                   formData.mobileNo
                 }

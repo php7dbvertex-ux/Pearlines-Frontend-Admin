@@ -112,7 +112,7 @@ const AppRoutes = () => {
           path="custom-notification/add"
           element={<AddCustomNotificationPage />}
         />
-        <Route path="/admin/custom-payment" element={<CustomPaymentPage />} />
+        <Route path="custom-payment" element={<CustomPaymentPage />} />
         <Route path="doctor/add" element={<AddDoctorPage />} />
 
         <Route path="tip/add" element={<AddTipPage />} />

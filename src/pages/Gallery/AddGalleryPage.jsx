@@ -79,9 +79,7 @@ const AddGalleryPage = () => {
 
       await createGallery(formData);
 
-      toast.success(
-        "Gallery Image Added Successfully"
-      );
+      toast.success("Gallery Image Added Successfully");
 
       setTimeout(() => {
         navigate("/admin/gallery-image");
@@ -89,15 +87,11 @@ const AddGalleryPage = () => {
     } catch (error) {
       console.error(error);
 
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to add image"
-      );
+      toast.error(error?.response?.data?.message || "Failed to add image");
     } finally {
       setSaving(false);
     }
   };
-
 
   return (
     <div>
@@ -107,12 +101,9 @@ const AddGalleryPage = () => {
 
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
         <form onSubmit={handleSubmit} className="p-4 sm:p-6">
-
           {/* Title */}
           <div className="mb-5">
-            <label className="block font-semibold mb-2">
-              Image Title
-            </label>
+            <label className="block font-semibold mb-2">Image Title</label>
             <input
               type="text"
               name="title"
@@ -130,28 +121,48 @@ const AddGalleryPage = () => {
 
           {/* Upload */}
           <div className="mb-5">
-            <label className="block font-semibold mb-2">
-              Gallery Image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="w-full sm:w-auto text-sm"
-            />
+            <label className="block font-semibold mb-2">Gallery Image</label>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              <label
+                htmlFor="galleryImage"
+                className="
+        bg-[#3c8dbc]
+        hover:bg-[#367fa9]
+        text-white
+        px-5
+        py-2
+        rounded
+        cursor-pointer
+        transition
+        text-sm
+        font-medium
+      ">
+                Choose Image
+              </label>
+
+              <span className="text-sm text-gray-500">
+                {formData.imageUrl ? "Image Selected ✓" : "No file chosen"}
+              </span>
+
+              <input
+                id="galleryImage"
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+
             {uploading && (
-              <p className="mt-2 text-sm text-blue-600">
-                Uploading image...
-              </p>
+              <p className="mt-2 text-sm text-blue-600">Uploading image...</p>
             )}
           </div>
 
           {/* Preview */}
           {formData.imageUrl && (
             <div className="mb-6">
-              <label className="block font-semibold mb-2">
-                Preview
-              </label>
+              <label className="block font-semibold mb-2">Preview</label>
               <img
                 src={formData.imageUrl}
                 alt="Preview"
@@ -173,11 +184,9 @@ const AddGalleryPage = () => {
               bg-[#3c8dbc] hover:bg-[#367fa9]
               text-white px-6 py-2
               rounded disabled:opacity-50
-            "
-          >
+            ">
             {saving ? "Saving..." : "Save Image"}
           </button>
-
         </form>
       </div>
     </div>

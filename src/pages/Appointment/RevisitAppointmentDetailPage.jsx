@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getAppointmentById,
   updateAppointment,
@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 
 const RevisitAppointmentDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     appointmentDate: "",
@@ -47,7 +48,8 @@ const RevisitAppointmentDetailPage = () => {
     e.preventDefault();
     try {
       await updateAppointment(id, formData);
-      Swal.fire("Success", "Revisit Appointment Updated Successfully", "success");
+      await Swal.fire("Success", "Revisit Appointment Updated Successfully", "success");
+      navigate("/admin/revisit-appointments");
     } catch (error) {
       console.error(error);
       Swal.fire("Error", "Failed To Update Revisit Appointment", "error");
@@ -145,7 +147,7 @@ const RevisitAppointmentDetailPage = () => {
             >
               <option value="Pending">Pending</option>
               <option value="Accepted">Accepted</option>
-              <option value="Visited">Visited</option>
+             
             </select>
           </div>
 

@@ -199,14 +199,20 @@ const TodayAppointmentPage = () => {
                     View Detail
                   </Link>
 
-                  <button
+                  <Link
+                    to="/admin/chat"
+                    state={{
+                      mobileNo: a.mobileNo,
+                      patientName: a.patientName,
+                      image: a.image,
+                    }}
                     className="
                       bg-[#3c8dbc] hover:bg-[#367fa9]
                       text-white px-3 py-1.5 rounded text-xs transition
                     "
                   >
                     Chat
-                  </button>
+                  </Link>
                 </div>
               </div>
             ))
@@ -256,14 +262,21 @@ const TodayAppointmentPage = () => {
                       <StatusBadge status={a.status} />
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <button
+                      <Link
+                        to="/admin/chat"
+                        state={{
+                          mobileNo: a.mobileNo,
+                          patientName: a.patientName,
+                          image: a.image,
+                        }}
                         className="
+                          inline-flex items-center justify-center
                           bg-[#3c8dbc] hover:bg-[#367fa9]
                           text-white px-4 py-1.5 rounded text-sm transition
                         "
                       >
                         Chat
-                      </button>
+                      </Link>
                     </td>
                   </tr>
                 ))

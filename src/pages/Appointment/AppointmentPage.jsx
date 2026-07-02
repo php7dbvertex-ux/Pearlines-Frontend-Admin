@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Eye } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { getAllAppointments } from "../../services/appointmentService";
 
 const StatusBadge = ({ status }) => {
@@ -21,6 +21,13 @@ const StatusBadge = ({ status }) => {
 };
 
 const AppointmentPage = () => {
+  const location = useLocation();
+
+  // If we arrived here from the Dashboard's "Pending Appointment" card,
+  // location.state.statusFilter will be "Pending". Otherwise this is
+  // undefined and the page behaves exactly as before (shows everything).
+  const statusFilter = location.state?.statusFilter || null;
+
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -47,13 +54,15 @@ const AppointmentPage = () => {
   }, []);
 
   const filteredAppointments = useMemo(() => {
-    return appointments.filter(
-      (a) =>
-        a.patientName?.toLowerCase().includes(search.toLowerCase()) ||
-        a.problem?.toLowerCase().includes(search.toLowerCase()) ||
-        a._id?.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [appointments, search]);
+    return appointments
+      .filter((a) => (statusFilter ? a.status === statusFilter : true))
+      .filter(
+        (a) =>
+          a.patientName?.toLowerCase().includes(search.toLowerCase()) ||
+          a.problem?.toLowerCase().includes(search.toLowerCase()) ||
+          a._id?.toLowerCase().includes(search.toLowerCase()),
+      );
+  }, [appointments, search, statusFilter]);
 
   const totalPages = Math.ceil(filteredAppointments.length / recordsPerPage);
   const effectiveCurrentPage = Math.min(

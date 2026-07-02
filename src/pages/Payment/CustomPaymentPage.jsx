@@ -159,11 +159,8 @@ const CustomPaymentPage = () => {
         "Payment request created successfully"
       );
 
-      setTimeout(() => {
-        navigate(
-          "/admin/custom-payment"
-        );
-      }, 1200);
+      console.log("Redirecting to /admin/payment now...");
+      navigate("/admin/payment");
     } catch (error) {
       console.error(error);
 
@@ -376,7 +373,7 @@ const CustomPaymentPage = () => {
               type="button"
               onClick={() =>
                 navigate(
-                  "/admin/custom-payment"
+                  "/admin/payment"
                 )
               }
               className="

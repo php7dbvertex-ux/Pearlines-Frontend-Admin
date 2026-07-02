@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getAppointmentById,
   updateAppointment,
@@ -10,6 +10,7 @@ import { toast } from "react-toastify";
 
 const AppointmentDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     appointmentDate: "",
@@ -18,17 +19,38 @@ const AppointmentDetailPage = () => {
     status: "Pending",
   });
 
+  // Keep track of the original date/time fetched from the server,
+  // so we can detect whether the admin actually changed them
+  // before allowing a "Rescheduled" save.
+  const originalRef = useRef({
+    appointmentDate: "",
+    appointmentTime: "",
+    status: "Pending",
+  });
+
   useEffect(() => {
     const loadAppointment = async () => {
       try {
         const response = await getAppointmentById(id);
         const appointment = response.data;
+
+        const loadedDate = appointment.appointmentDate?.split("T")[0] || "";
+        const loadedTime = appointment.appointmentTime || "";
+        const loadedStatus = appointment.status || "Pending";
+
         setFormData({
-          appointmentDate: appointment.appointmentDate?.split("T")[0] || "",
-          appointmentTime: appointment.appointmentTime || "",
+          appointmentDate: loadedDate,
+          appointmentTime: loadedTime,
           problem: appointment.problem || "",
-          status: appointment.status || "Pending",
+          status: loadedStatus,
         });
+
+        // Store the original values for comparison on submit
+        originalRef.current = {
+          appointmentDate: loadedDate,
+          appointmentTime: loadedTime,
+          status: loadedStatus,
+        };
       } catch (error) {
         console.error("Error Loading Appointment:", error);
       } finally {
@@ -44,9 +66,40 @@ const AppointmentDetailPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation: if the admin is rescheduling, they must pick a
+    // different date or time than what was already saved.
+    if (formData.status === "Rescheduled") {
+      const dateUnchanged =
+        formData.appointmentDate === originalRef.current.appointmentDate;
+      const timeUnchanged =
+        formData.appointmentTime === originalRef.current.appointmentTime;
+
+      if (dateUnchanged && timeUnchanged) {
+        Swal.fire(
+          "Date/Time Required",
+          "Please change or select a new date or time to reschedule this appointment.",
+          "warning"
+        );
+        return;
+      }
+    }
+
     try {
       await updateAppointment(id, formData);
-      Swal.fire("Success", "Appointment Updated Successfully", "success");
+
+      // Update the "original" snapshot so a subsequent edit in the
+      // same session is compared against the just-saved values.
+      originalRef.current = {
+        appointmentDate: formData.appointmentDate,
+        appointmentTime: formData.appointmentTime,
+        status: formData.status,
+      };
+
+      await Swal.fire("Success", "Appointment Updated Successfully", "success");
+
+      // Redirect back to the appointments list after a successful save
+      navigate("/admin/appointments");
     } catch (error) {
       console.error("Update Error:", error);
       Swal.fire("Error", "Failed To Update Appointment", "error");

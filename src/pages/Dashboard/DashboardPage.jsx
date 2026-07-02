@@ -146,6 +146,9 @@ const DashboardPage = () => {
       footerColor: "bg-[#c94535]",
       icon: <CalendarDays size={58} />,
       route: "/admin/appointments",
+      // This tells the Appointment page to pre-filter to only
+      // "Pending" status appointments when arriving from this card.
+      state: { statusFilter: "Pending" },
     },
 
     {
@@ -193,7 +196,7 @@ const DashboardPage = () => {
         {cards.map((card, index) => (
           <div
             key={index}
-            onClick={() => navigate(card.route)}
+            onClick={() => navigate(card.route, { state: card.state })}
             className="
                 rounded-md
                 overflow-hidden

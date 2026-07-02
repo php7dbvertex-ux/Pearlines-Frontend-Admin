@@ -1,14 +1,16 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { toast } from "react-toastify";
 
-import { createService } from "../../services/serviceService";
+import { getServiceById, updateService } from "../../services/serviceService";
 import { uploadImage } from "../../services/uploadService";
 
-const AddServicePage = () => {
+const EditServicePage = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // make sure your route is defined as "/admin/service/edit/:id"
 
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -17,6 +19,53 @@ const AddServicePage = () => {
     imageUrl: "",
     publicId: "",
   });
+
+  // =========================
+  // Load Service
+  // =========================
+
+  const loadService = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const response = await getServiceById(id);
+
+      // serviceService.js already does `return response.data` from axios,
+      // so `response` here IS the service object — NOT response.data.
+      // But some backends wrap it as { data: {...} } or { service: {...} }.
+      // This handles all 3 shapes safely instead of assuming one.
+      const service =
+        response?.data?.title !== undefined
+          ? response.data
+          : response?.service?.title !== undefined
+          ? response.service
+          : response;
+
+      if (!service || service.title === undefined) {
+        console.error("Unexpected getServiceById shape:", response);
+        toast.error("Could not read service data from server response");
+        return;
+      }
+
+      setFormData({
+        title: service.title || "",
+        description: service.description || "",
+        imageUrl: service.imageUrl || "",
+        publicId: service.publicId || "",
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load service");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      loadService();
+    }
+  }, [id, loadService]);
 
   // =========================
   // Input Change
@@ -51,7 +100,6 @@ const AddServicePage = () => {
       toast.success("Image uploaded successfully");
     } catch (error) {
       console.error(error);
-
       toast.error("Image upload failed");
     } finally {
       setUploading(false);
@@ -83,9 +131,9 @@ const AddServicePage = () => {
     try {
       setSaving(true);
 
-      await createService(formData);
+      await updateService(id, formData);
 
-      toast.success("Service Added Successfully");
+      toast.success("Service Updated Successfully");
 
       setTimeout(() => {
         navigate("/admin/service");
@@ -94,18 +142,25 @@ const AddServicePage = () => {
       console.error(error);
 
       toast.error(
-        error?.response?.data?.message ||
-          "Failed to add service"
+        error?.response?.data?.message || "Failed to update service"
       );
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="text-center py-10 text-lg">
+        Loading Service...
+      </div>
+    );
+  }
+
   return (
     <div>
       <h1 className="text-[24px] sm:text-[28px] font-light text-[#444] mb-4 text-center sm:text-left">
-        Add Service
+        Edit Service
       </h1>
 
       <div className="bg-white border-t-4 border-[#3c8dbc] shadow-sm rounded-sm">
@@ -198,7 +253,7 @@ const AddServicePage = () => {
               rounded disabled:opacity-50
             "
           >
-            {saving ? "Saving..." : "Save Service"}
+            {saving ? "Updating..." : "Update Service"}
           </button>
 
         </form>
@@ -207,4 +262,4 @@ const AddServicePage = () => {
   );
 };
 
-export default AddServicePage;
+export default EditServicePage;

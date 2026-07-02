@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { createDoctor } from "../../services/doctorService";
 
 const AddDoctorPage = () => {
@@ -18,83 +19,197 @@ const AddDoctorPage = () => {
   // =========================
   // Handle Change
   // =========================
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
-  const handleChange = (e) => {
+  // Name: Only letters and spaces
+  if (name === "name") {
+    const lettersOnly = value.replace(/[^a-zA-Z\s]/g, "");
+
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      name: lettersOnly,
     }));
 
     setErrors((prev) => ({
       ...prev,
-      [e.target.name]: "",
+      name: "",
     }));
-  };
 
+    return;
+  }
+
+  // Mobile Number: Only digits, max 10
+  if (name === "mobileNo") {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+
+    setFormData((prev) => ({
+      ...prev,
+      mobileNo: digitsOnly,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      mobileNo: "",
+    }));
+
+    return;
+  }
+
+  // MPIN: Only digits, max 4
+  if (name === "mpin") {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 4);
+
+    setFormData((prev) => ({
+      ...prev,
+      mpin: digitsOnly,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      mpin: "",
+    }));
+
+    return;
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+
+  setErrors((prev) => ({
+    ...prev,
+    [name]: "",
+  }));
+};
   // =========================
   // Handle Blur
   // =========================
 
-  const handleBlur = (e) => {
-    const { name, value } = e.target;
+const handleBlur = (e) => {
+  const { name, value } = e.target;
 
-    if (!value.trim()) {
+  if (!value.trim()) {
+    setErrors((prev) => ({
+      ...prev,
+      [name]: "This field is required",
+    }));
+    return;
+  }
+
+  if (name === "name") {
+    if (!/^[A-Za-z ]+$/.test(value)) {
       setErrors((prev) => ({
         ...prev,
-        [name]: "This field is required",
+        name: "Name can contain only letters",
       }));
-    } else {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      return;
     }
-  };
+  }
 
+  if (name === "email") {
+    const emailRegex =
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        email: "Enter a valid email address",
+      }));
+      return;
+    }
+  }
+
+  if (name === "mobileNo") {
+    if (value.length !== 10) {
+      setErrors((prev) => ({
+        ...prev,
+        mobileNo: "Mobile number must be exactly 10 digits",
+      }));
+      return;
+    }
+  }
+
+  if (name === "mpin") {
+    if (!/^\d{4}$/.test(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        mpin: "MPIN must be exactly 4 digits",
+      }));
+      return;
+    }
+  }
+
+  setErrors((prev) => ({
+    ...prev,
+    [name]: "",
+  }));
+};
   // =========================
   // Submit
   // =========================
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    const newErrors = {};
+  const newErrors = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "This field is required";
-    }
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!formData.mobileNo.trim()) {
-      newErrors.mobileNo = "This field is required";
-    }
+  if (!formData.name.trim()) {
+    newErrors.name = "This field is required";
+  } else if (!/^[A-Za-z ]+$/.test(formData.name)) {
+    newErrors.name = "Name can contain only letters";
+  }
 
-    if (!formData.email.trim()) {
-      newErrors.email = "This field is required";
-    }
+  if (!formData.mobileNo.trim()) {
+    newErrors.mobileNo = "This field is required";
+  } else if (formData.mobileNo.length !== 10) {
+    newErrors.mobileNo =
+      "Mobile number must be exactly 10 digits";
+  }
 
-    if (!formData.mpin.trim()) {
-      newErrors.mpin = "This field is required";
-    } else if (!/^\d{4}$/.test(formData.mpin)) {
-      newErrors.mpin = "MPIN must be exactly 4 digits";
-    }
+  if (!formData.email.trim()) {
+    newErrors.email = "This field is required";
+  } else if (!emailRegex.test(formData.email)) {
+    newErrors.email = "Enter a valid email address";
+  }
 
-    setErrors(newErrors);
+  if (!formData.mpin.trim()) {
+    newErrors.mpin = "This field is required";
+  } else if (!/^\d{4}$/.test(formData.mpin)) {
+    newErrors.mpin =
+      "MPIN must be exactly 4 digits";
+  }
 
-    if (Object.keys(newErrors).length > 0) return;
+  setErrors(newErrors);
 
-    try {
-      setLoading(true);
-      await createDoctor(formData);
-      alert("Doctor Added Successfully");
-      navigate("/admin/doctor-list");
-    } catch (error) {
-      console.error(error);
-      alert(error?.response?.data?.message || "Failed to add doctor");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (Object.keys(newErrors).length > 0) {
+    toast.error("Please fill all required fields correctly");
+    return;
+  }
 
+  try {
+    setLoading(true);
+
+    await createDoctor(formData);
+
+    toast.success("Doctor Added Successfully");
+
+    navigate("/admin/doctor-list");
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error?.response?.data?.message ||
+        "Failed to add doctor"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
   // Shared input class
   const inputClass = `
     w-full h-[42px] border border-gray-300
@@ -143,6 +258,8 @@ const AddDoctorPage = () => {
               <input
                 type="text"
                 name="mobileNo"
+                inputMode="numeric"
+                maxLength={10}
                 value={formData.mobileNo}
                 onChange={handleChange}
                 onBlur={handleBlur}
